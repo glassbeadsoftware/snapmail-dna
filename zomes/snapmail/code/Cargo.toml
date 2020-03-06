@@ -1,7 +1,7 @@
 [package]
 name = "snapmail"
 version = "0.1.0"
-authors = ["hc-scaffold-framework"]
+authors = ["doute.d@gmail.com"]
 edition = "2018"
 
 [dependencies]
