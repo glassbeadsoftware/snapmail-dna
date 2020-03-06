@@ -13,14 +13,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ab925246-cd5f-4a20-adf0-7a32d90c99a7" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.circleci/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.circleci/config.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/snapmail-dna.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/snapmail-dna.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/zomes/snapmail/code/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/zomes/snapmail/code/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/test/index.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/zomes/snapmail/code/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/zomes/snapmail/code/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/zomes/snapmail/zome.json" beforeDir="false" afterPath="$PROJECT_DIR$/zomes/snapmail/zome.json" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -75,7 +70,7 @@
       <option name="presentableId" value="Default" />
       <updated>1583526663489</updated>
       <workItem from="1583526665815" duration="1212000" />
-      <workItem from="1583527896684" duration="2131000" />
+      <workItem from="1583527896684" duration="3108000" />
     </task>
     <servers />
   </component>

@@ -76,7 +76,7 @@ mod snapmail {
      fn outmail_def() -> ValidatingEntryType {
         entry!(
             name: "outmail",
-            description: "Entry of authored mail",
+            description: "Entry for an authored mail",
             sharing: Sharing::Private,
             validation_package: || {
                 hdk::ValidationPackageDefinition::Entry
@@ -102,10 +102,10 @@ mod snapmail {
     // -- inmail -- //
 
     #[entry_def]
-    fn inmail() -> ValidatingEntryType {
+    fn inmail_def() -> ValidatingEntryType {
         entry!(
             name: "inmail",
-            description: "Entry of received mail",
+            description: "Entry for a received mail",
             sharing: Sharing::Private,
             validation_package: || {
                 hdk::ValidationPackageDefinition::Entry
