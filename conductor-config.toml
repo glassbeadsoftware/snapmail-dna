@@ -1,0 +1,53 @@
+bridges = []
+persistence_dir = '.'
+ui_bundles = []
+ui_interfaces = []
+
+[[agents]]
+id = 'hc-run-agent'
+keystore_file = 'unused'
+name = 'snapmail user'
+public_address = 'HcScIc8G7X769Nr6cnRxgR73wi8au946z7hc46EMDJjaz8au4bD7V6hj7T6B8fa'
+test_agent = true
+
+[[dnas]]
+file = './dist/snapmail.dna.json'
+hash = 'QmYngBdn2WbK8kiCDTz8gZyJ9FgNGTnWd4KdfRjZKwQ2Cc'
+id = 'hc-run-dna'
+
+[[instances]]
+agent = 'hc-run-agent'
+dna = 'hc-run-dna'
+id = 'snapmail'
+
+[instances.storage]
+type = 'memory'
+
+[[interfaces]]
+admin = true
+id = 'websocket-interface'
+
+[[interfaces.instances]]
+id = 'snapmail'
+
+[interfaces.driver]
+port = 8888
+type = 'websocket'
+
+[logger]
+state_dump = false
+type = 'info'
+
+[logger.rules]
+rules = []
+
+# [network]
+# sim2h_url = 'ws://sim2h.harris-braun.com:9000'
+# type = 'sim2h'
+
+[passphrase_service]
+type = 'cmd'
+
+[signals]
+consistency = false
+trace = false

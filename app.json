@@ -1,0 +1,14 @@
+{
+  "name": "SnapMail",
+  "description": "email-type asynchronous messaging app",
+  "authors": [
+    {
+      "identifier": "Damien Douté <doute.d@gmail.com>",
+      "public_key_source": "",
+      "signature": ""
+    }
+  ],
+  "version": "0.1.0",
+  "dht": {},
+  "properties": null
+}
