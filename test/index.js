@@ -11,7 +11,7 @@ process.on('unhandledRejection', error => {
   console.error('got unhandledRejection:', error);
 });
 
-const dnaPath = path.join(__dirname, "../dist/snapmail.dna.json")
+const dnaPath = path.join(__dirname, "../dist/snapmail-dna.dna.json")
 
 const orchestrator = new Orchestrator({
   middleware: combine(
@@ -40,28 +40,37 @@ orchestrator.registerScenario("entry creation test", async (s, t) => {
 
   // Make a call to a Zome function
   // indicating the function, and passing it an input
-  const test_outmail = {"entry" : {
-      "mail": {
-        "subject": "test-outmail",
-        "payload": "blablabla",
-        "date_sent": 42,
-        "to": "",
-        "cc": ""
+  const test_outmail = {
+    outmail: {
+      mail: {
+        subject: "test-outmail",
+        payload: "blablabla",
+        date_sent: 42,
+        to: [],
+        cc: []
       },
-      "bcc": ""
+      bcc: []
     }
   }
 
   const addr = await alice.call("myInstanceName", "snapmail", "create_outmail", test_outmail)
-
+  console.log('addr: ' + JSON.stringify(addr))
   // Wait for all network activity to settle
   await s.consistency()
 
-  const result = await alice.call("myInstanceName", "snapmail", "get_outmail", {"address": addr.Ok})
+  const result = await alice.call("myInstanceName", "snapmail", "get_outmail", {
+    address: addr.Ok
+  })
+  // debug logs
+  console.log('result      : ' + JSON.stringify(result.Ok.App))
+  const result_obj = JSON.parse(result.Ok.App[1])
+  console.log('result_obj  : ' + JSON.stringify(result_obj))
+  console.log('test_outmail: ' + JSON.stringify(test_outmail.outmail))
+
    // const result = await bob.call("myInstanceName", "snapmail", "get_outmail", {"address": addr.Ok})
 
   // check for equality of the actual and expected results
-  t.deepEqual(result, { Ok: { App: [ 'outmail', test_outmail ] } })
+  t.deepEqual(result_obj, test_outmail.outmail)
 })
 
 orchestrator.run()
