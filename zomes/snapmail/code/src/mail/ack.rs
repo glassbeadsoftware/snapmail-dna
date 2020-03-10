@@ -28,8 +28,22 @@ pub fn ackreceipt_encrypted_def() -> ValidatingEntryType {
             hdk::ValidationPackageDefinition::Entry
         },
         validation: | _validation_data: hdk::EntryValidationData<AckReceiptEncrypted>| {
+            // FIXME
             Ok(())
-        }
+        },
+        links: [
+            from!(
+                "%agent_id",
+                link_type: "ack_inbox",
+                validation_package: || {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: | _validation_data: hdk::LinkValidationData| {
+                    // FIXME
+                    Ok(())
+                }
+            ),
+        ],
     )
 }
 

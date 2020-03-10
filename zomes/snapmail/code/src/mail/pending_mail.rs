@@ -30,8 +30,22 @@ pub fn pendingmail_def() -> ValidatingEntryType {
             hdk::ValidationPackageDefinition::Entry
         },
         validation: | _validation_data: hdk::EntryValidationData<OutMail>| {
+            // FIXME
             Ok(())
-        }
+        },
+        links: [
+            from!(
+                "%agent_id",
+                link_type: "mail_inbox",
+                validation_package: || {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: | _validation_data: hdk::LinkValidationData| {
+                    // FIXME
+                    Ok(())
+                }
+            ),
+        ],
     )
 }
 

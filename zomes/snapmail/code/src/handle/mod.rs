@@ -25,8 +25,33 @@ pub fn handle_def() -> ValidatingEntryType {
             hdk::ValidationPackageDefinition::Entry
         },
         validation: | _validation_data: hdk::EntryValidationData<Handle>| {
+            // FIXME
             Ok(())
-        }
+        },
+            links: [
+                from!(
+                    "%agent_id",
+                    link_type: "handle",
+                    validation_package: || {
+                        hdk::ValidationPackageDefinition::Entry
+                    },
+                    validation: | _validation_data: hdk::LinkValidationData| {
+                        // FIXME: Can only set handle for self
+                        Ok(())
+                    }
+                ),
+                from!(
+                    "%dna",
+                    link_type: "member",
+                    validation_package: || {
+                        hdk::ValidationPackageDefinition::Entry
+                    },
+                    validation: | _validation_data: hdk::LinkValidationData| {
+                        // FIXME
+                        Ok(())
+                    }
+                ),
+            ],
     )
 }
 

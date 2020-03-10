@@ -34,8 +34,33 @@ pub fn inmail_def() -> ValidatingEntryType {
                 hdk::ValidationPackageDefinition::Entry
             },
             validation: | _validation_data: hdk::EntryValidationData<InMail>| {
+                // FIXME
                 Ok(())
-            }
+            },
+            links: [
+                to!(
+                    "ackreceipt_encrypted",
+                    link_type: "acknowledgment_encrypted",
+                    validation_package: || {
+                        hdk::ValidationPackageDefinition::Entry
+                    },
+                    validation: | _validation_data: hdk::LinkValidationData| {
+                        // FIXME
+                        Ok(())
+                    }
+                ),
+                to!(
+                    "ackreceipt_private",
+                    link_type: "acknowledgment_private",
+                    validation_package: || {
+                        hdk::ValidationPackageDefinition::Entry
+                    },
+                    validation: | _validation_data: hdk::LinkValidationData| {
+                        // FIXME
+                        Ok(())
+                    }
+                ),
+            ],
         )
 }
 

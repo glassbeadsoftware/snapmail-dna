@@ -38,8 +38,47 @@ pub fn outmail_def() -> ValidatingEntryType {
             hdk::ValidationPackageDefinition::Entry
         },
         validation: | _validation_data: hdk::EntryValidationData<OutMail>| {
+            // FIXME: Check no duplicate recepient?
             Ok(())
-        }
+        },
+        links: [
+            to!(
+                "ackreceipt_encrypted",
+                link_type: "receipt_encrypted",
+                validation_package: || {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: | _validation_data: hdk::LinkValidationData| {
+                    // FIXME: Check AckReceipt author is one of the OutMail's recepient
+                    // FIXME: Check if AckReceipt for this author already received?
+                    Ok(())
+                }
+            ),
+            to!(
+                "ackreceipt_private",
+                link_type: "receipt_private",
+                validation_package: || {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: | _validation_data: hdk::LinkValidationData| {
+                    // FIXME: Check AckReceipt author is one of the OutMail's recepient
+                    // FIXME: Check if AckReceipt for this author already received?
+                    Ok(())
+                }
+            ),
+            to!(
+                "pendingmail",
+                link_type: "pending",
+                validation_package: || {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: | _validation_data: hdk::LinkValidationData| {
+                    // FIXME: Check that outmail_address within PendingMail corresponds
+                    // FIXME: Check PendingMail is authored by same agant
+                    Ok(())
+                }
+            ),
+        ],
     )
 }
 
