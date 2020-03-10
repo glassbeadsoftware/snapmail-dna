@@ -28,40 +28,20 @@ use hdk::holochain_persistence_api::{
     cas::content::Address
 };
 
+use mail;
 use hdk_proc_macros::zome;
 
 // see https://developer.holochain.org/api/0.0.42-alpha5/hdk/ for info on using the hdk library
 
-/// Core content of *Mail entries
-#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
-pub struct Mail {
-    subject: String,
-    payload: String,
-    date_sent: u64,
-    to: Vec<AgentId>,
-    cc: Vec<AgentId>,
-}
-
-/// Entry representing an authored mail. It is private.
-#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
-pub struct OutMail {
-    mail: Mail,
-    bcc: Vec<AgentId>,
-}
-
-/// Entry representing a received mail. It is private.
-#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
-pub struct InMail {
-    mail: Mail,
-    from: AgentId,
-    date_received: u64,
-}
 
 #[zome]
 mod snapmail {
+    use std::time::SystemTime;
+
 
     #[init]
     fn init() {
+        // TODO: create username?
         Ok(())
     }
 
@@ -74,21 +54,14 @@ mod snapmail {
 
     #[entry_def]
      fn outmail_def() -> ValidatingEntryType {
-        entry!(
-            name: "outmail",
-            description: "Entry for an authored mail",
-            sharing: Sharing::Private,
-            validation_package: || {
-                hdk::ValidationPackageDefinition::Entry
-            },
-            validation: | _validation_data: hdk::EntryValidationData<OutMail>| {
-                Ok(())
-            }
-        )
+        mail::outmail_def()
     }
 
     #[zome_fn("hc_public")]
-    fn create_outmail(outmail: OutMail) -> ZomeApiResult<Address> {
+    fn create_outmail(subject: String, payload: String, to: Vec<AgentId>, cc: Vec<AgentId>, bcc: Vec<AgentId>) -> ZomeApiResult<Address> {
+        let date_sent = SystemTime::now();
+        let mail = Mail { date_sent, subject, payload, to, cc, };
+        let outmail = OutMail::new(mail, bcc)?;
         let entry = Entry::App("outmail".into(), outmail.into());
         let address = hdk::commit_entry(&entry)?;
         Ok(address)
@@ -103,26 +76,9 @@ mod snapmail {
 
     #[entry_def]
     fn inmail_def() -> ValidatingEntryType {
-        entry!(
-            name: "inmail",
-            description: "Entry for a received mail",
-            sharing: Sharing::Private,
-            validation_package: || {
-                hdk::ValidationPackageDefinition::Entry
-            },
-            validation: | _validation_data: hdk::EntryValidationData<InMail>| {
-                Ok(())
-            }
-        )
+        mail::inmail_def()
     }
-
-    #[zome_fn("hc_public")]
-    fn create_inmail(inmail: InMail) -> ZomeApiResult<Address> {
-        let entry = Entry::App("outmail".into(), inmail.into());
-        let address = hdk::commit_entry(&entry)?;
-        Ok(address)
-    }
-
+    
     #[zome_fn("hc_public")]
     fn get_inmail(address: Address) -> ZomeApiResult<Option<Entry>> {
         hdk::get_entry(&address)
