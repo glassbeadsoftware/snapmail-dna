@@ -12,11 +12,14 @@ use hdk::{
 
 use std::collections::HashMap;
 use super::{Mail, OutMail};
+use hdk::error::ZomeApiError;
+use holochain_wasm_utils::holochain_persistence_api::hash::HashString;
+use crate::mail::{PendingMail, ReceipientKind};
 
-pub enum SendResult {
-    OK_DIRECT,
+
+pub enum SendSuccessKind {
+    OK_DIRECT(Address),
     OK_PENDING(Address),
-    ERR,
 }
 
 /// Struct holding all result data from a send request
@@ -38,17 +41,18 @@ impl SendTotalResult {
         }
     }
 
-    pub fn add_pending(mut self, kind: super::ReceipientKind, agentId: AgentId, address: Address) {
+    pub fn add_pending(mut self, kind: super::ReceipientKind, agentId: &AgentId, address: Address) {
         match kind {
-            TO => self.to_pendings.insert(agentId, address),
-            CC => self.cc_pendings.insert(agentId, address),
-            BCC => self.bcc_pendings.insert(agentId, address),
+            TO => self.to_pendings.insert(agentId.clone(), address),
+            CC => self.cc_pendings.insert(agentId.clone(), address),
+            BCC => self.bcc_pendings.insert(agentId.clone(), address),
         };
     }
 }
 
 ///
-fn send_mail_to(mail: &Mail, to_first: AgentId) -> ZomeApiResult<SendResult> {
+fn send_mail_to(outmail_address: &Address, mail: &Mail, to_first: &AgentId) -> ZomeApiResult<SendSuccessKind> {
+    // First try sending directly to other Agent if Online
     let payload = serde_json::to_string(mail).unwrap();
     let result = hdk::send(
         Address::from(to_first.clone()),
@@ -56,9 +60,16 @@ fn send_mail_to(mail: &Mail, to_first: AgentId) -> ZomeApiResult<SendResult> {
         crate::DIRECT_SEND_TIMEOUT_MS.into(),
     );
     if let Ok(response) = result {
-        return Ok(SendResult::OK_DIRECT);
+        // response should be AckReceiptPrivate address
+        let ack_address = HashString::from(response);
+        hdk::link_entries(&outmail_address, &ack_address, "receipt_private", "")?;
+        return Ok(SendResult::OK_DIRECT(ack_address));
     };
-    Err()
+    // Direct Send failed, so send to DHT instead by creating a PendingMail
+    let pending = PendingMail::new(mail.clone(), outmail_address.clone());
+    let pending_entry = Entry::App("pendingmail".into(), outmail.into());
+    let pending_address = hdk::commit_entry(&pending_entry)?;
+    Ok(SendResult::OK_PENDING(pending_address))
 }
 
 /// Zone Function
@@ -68,24 +79,46 @@ pub fn send_mail(
     subject: String,
     payload: String,
     to_first: AgentId,
-    to: Vec<AgentId>,
+    to_remaining: Vec<AgentId>,
     cc: Vec<AgentId>,
     bcc: Vec<AgentId>,
 ) -> ZomeApiResult<SendTotalResult> {
-    let (outmail_address, outmail_entry) = OutMail::create(subject, payload, to_first, to, cc, bcc)?;
-    let mut result = SendTotalResult::new(outmail_address);
+    let outmail = OutMail::create(subject, payload, to_first, to, cc, bcc);
+    let outmail_entry = Entry::App("outmail".into(), outmail.into());
+    let outmail_address = hdk::commit_entry(&outmail_entry)?;
+
+    let mut total_result = SendTotalResult::new(outmail_address.clone());
 
     // to first
-    send_outmail_to(outmail_entry, to_first);
+    let res = send_mail_to(&outmail_address, &outmail.mail, &to_first);
+    if let Ok(SendSuccessKind::OK_PENDING(pending_address)) = res {
+        total_result.add_pending(ReceipientKind::TO, &to_first, pending_address);
+    }
 
-        // to remaining
-    for
-
+    // to remaining
+    for agent in to_remaining {
+        let res = send_mail_to(&outmail_address, &outmail.mail, &agent);
+        if let Ok(SendSuccessKind::OK_PENDING(pending_address)) = res {
+            total_result.add_pending(ReceipientKind::TO, &agent, pending_address);
+        }
+    }
 
     // cc
+    for agent in cc {
+        let res = send_mail_to(&outmail_address, &outmail.mail, &agent);
+        if let Ok(SendSuccessKind::OK_PENDING(pending_address)) = res {
+            total_result.add_pending(ReceipientKind::CC, &agent, pending_address);
+        }
+    }
 
     // bcc
+    for agent in bcc {
+        let res = send_mail_to(&outmail_address, &outmail.mail, &agent);
+        if let Ok(SendSuccessKind::OK_PENDING(pending_address)) = res {
+            total_result.add_pending(ReceipientKind::BCC, &agent, pending_address);
+        }
+    }
 
-
-    Ok(outmail_address, pendingMail_address)
+    // Done
+    Ok(total_result)
 }

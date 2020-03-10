@@ -24,8 +24,8 @@ use super::{
 /// Entry representing an authored mail. It is private.
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct OutMail {
-    mail: Mail,
-    bcc: Vec<AgentId>,
+    pub mail: Mail,
+    pub bcc: Vec<AgentId>,
 }
 
 /// Entry definition
@@ -101,13 +101,11 @@ impl OutMail {
         to_remaining: Vec<AgentId>,
         cc: Vec<AgentId>,
         bcc: Vec<AgentId>,
-    ) -> ZomeApiResult<(Address, Entry)> {
+    ) -> Self {
+        // TODO: remove duplicate receipients
         let date_sent = crate::snapmail_now();
-        let mail = Mail { date_sent, subject, payload, to_first, to_remaining, cc, };
-        let outmail = OutMail::new(mail, bcc)?;
-        let entry = Entry::App("outmail".into(), outmail.into());
-        let address = hdk::commit_entry(&entry)?;
-        Ok((address, entry))
+        let mail = Mail { date_sent, subject, payload, to_first, to_remaining, cc };
+        OutMail::new(mail, bcc)
     }
 
     pub fn generate_pendings(self) -> Vec<PendingMail> {
