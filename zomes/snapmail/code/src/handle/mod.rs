@@ -1,4 +1,5 @@
 use hdk::{
+    error::{ZomeApiError, ZomeApiResult},
     entry_definition::ValidatingEntryType,
     holochain_persistence_api::{
         cas::content::Address
@@ -6,9 +7,11 @@ use hdk::{
     holochain_core_types::{
         entry::Entry,
         agent::AgentId,
+        link::LinkMatch,
     },
 };
 
+use crate::utils::into_typed;
 
 /// Entry representing the username of an Agent
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
@@ -63,17 +66,43 @@ impl Handle {
     }
 }
 
-pub fn get_handle() -> Option<Handle> {
-    handle::get_handle()
+/// Zome Function
+/// get latest handle for this agent
+pub fn get_handle() -> Option<Entry> {
+    let link_results = hdk::get_links(
+        &*hdk::AGENT_INITIAL_HASH,
+        LinkMatch::Exactly("handle"),
+        LinkMatch::Any,
+    ).expect("No reason for this to fail");
+    let links = link_results.links();
+    assert!(links.size() <= 1);
+    if links.size() == 0 {
+        return None;
+    }
+    let entry_address = &links[0].address;
+    let entry = hdk::get_entry(entry_address)
+        .expect("No reason to crash here")
+        .expect("Should have it");
+    return Some(entry);
 }
 
+/// Zome Function
+/// Set handle for this agent
 pub fn set_handle(name: String) -> ZomeApiResult<Address> {
     let new_handle = Handle::new(name);
-    let maybe_current_handle = get_handle();
-    if let Some(current_handle) = maybe_current_handle {
-        hdk::update_entry(profile_entry, &address)?;
+    let app_entry = Entry::App("handle".into(), new_handle.into());
+    let maybe_current_handle_entry = get_handle();
+    if let Some(current_handle_entry) = maybe_current_handle {
+        // If handle already set to this value, just return current entry address
+        let current_handle = into_typed::<Handle>(current_handle_entry)
+            .expect("Should be a Handle entry");
+        if current_handle.name == name {
+            return Ok(current_handle_entry.address);
+        }
+        // Really new name so just update entry
+        hdk::update_entry(app_entry, &current_handle_entry.address)?;
     }
-    let app_entry = Entry::App("handle".into(), goal.clone().into());
+    // First Handle ever, commit entry
     let entry_address = hdk::commit_entry(&app_entry)?;
     return Ok(entry_address);
 }

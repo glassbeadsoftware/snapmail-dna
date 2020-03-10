@@ -101,7 +101,15 @@ mod snapmail {
     fn set_handle(name: String) -> ZomeApiResult<Address> { handle::set_handle(name) }
 
     #[zome_fn("hc_public")]
-    fn get_handle() -> Option<Handle> { handle::get_handle() }
+    fn get_handle() -> String {
+        let maybe_current_handle_entry = handle::get_handle();
+        if let Some(current_handle_entry) = maybe_current_handle {
+            let current_handle = into_typed::<Handle>(current_handle_entry)
+                .expect("Should be a Handle entry");
+            return current_handle.name;
+        }
+        return "<noname>".to_string();
+    }
 
     #[zome_fn("hc_public")]
     fn send_mail(
