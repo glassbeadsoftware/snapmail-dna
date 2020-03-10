@@ -97,29 +97,14 @@ impl OutMail {
     pub fn create(
         subject: String,
         payload: String,
-        to_first: AgentId,
-        to_remaining: Vec<AgentId>,
+        to: Vec<AgentId>,
         cc: Vec<AgentId>,
         bcc: Vec<AgentId>,
     ) -> Self {
+        assert_ne!(0, to.size() + cc.size(), bcc.size());
         // TODO: remove duplicate receipients
         let date_sent = crate::snapmail_now();
-        let mail = Mail { date_sent, subject, payload, to_first, to_remaining, cc };
+        let mail = Mail { date_sent, subject, payload, to, cc };
         OutMail::new(mail, bcc)
-    }
-
-    pub fn generate_pendings(self) -> Vec<PendingMail> {
-        let mut result = Vec::with_capacity(self.mail.cc.size() + self.bcc.size());
-        // cc
-        for agent in self.mail.cc {
-            let pending = PendingMail::create(self.mail, agent);
-            result.push(pending);
-        }
-        // bcc
-        for agent in self.bcc {
-            let pending = PendingMail::create(self.mail, agent);
-            result.push(pending);
-        }
-        result
     }
 }

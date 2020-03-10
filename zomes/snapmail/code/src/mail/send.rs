@@ -78,24 +78,17 @@ fn send_mail_to(outmail_address: &Address, mail: &Mail, to_first: &AgentId) -> Z
 pub fn send_mail(
     subject: String,
     payload: String,
-    to_first: AgentId,
-    to_remaining: Vec<AgentId>,
+    to: Vec<AgentId>,
     cc: Vec<AgentId>,
     bcc: Vec<AgentId>,
 ) -> ZomeApiResult<SendTotalResult> {
-    let outmail = OutMail::create(subject, payload, to_first, to, cc, bcc);
+    let outmail = OutMail::create(subject, payload, to, cc, bcc);
     let outmail_entry = Entry::App("outmail".into(), outmail.into());
     let outmail_address = hdk::commit_entry(&outmail_entry)?;
 
     let mut total_result = SendTotalResult::new(outmail_address.clone());
 
-    // to first
-    let res = send_mail_to(&outmail_address, &outmail.mail, &to_first);
-    if let Ok(SendSuccessKind::OK_PENDING(pending_address)) = res {
-        total_result.add_pending(ReceipientKind::TO, &to_first, pending_address);
-    }
-
-    // to remaining
+    // to
     for agent in to_remaining {
         let res = send_mail_to(&outmail_address, &outmail.mail, &agent);
         if let Ok(SendSuccessKind::OK_PENDING(pending_address)) = res {

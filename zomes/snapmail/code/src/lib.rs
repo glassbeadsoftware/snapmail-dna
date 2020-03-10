@@ -45,6 +45,9 @@ mod snapmail {
 
     // -- System -- //
 
+    use hdk::error::ZomeApiError;
+
+
     #[init]
     fn init() {
         // TODO: create username?
@@ -119,12 +122,24 @@ mod snapmail {
         cc: Vec<AgentId>,
         bcc: Vec<AgentId>,
     ) -> ZomeApiResult<Address, Address> {
-        mail::send_mail()
+        if to.size() + cc.size() + bcc.size() < 1 {
+            return ZomeApiError::Internal("Mail lacks receipients".into())
+        }
+        mail::send_mail(subject, payload, to, cc, bcc)
     }
 
     #[zome_fn("hc_public")]
-    fn get_mail(address: Address) -> ZomeApiResult<Option<Entry>> {
-        hdk::get_entry(&address)
+    fn get_mail(address: Address) -> Option<Result<InMail, OutMail>> {
+        mail::get_mail(address)
     }
 
+    #[zome_fn("hc_public")]
+    fn check_mail_inbox() -> ZomeApiResult<Vec<Address>> {
+        mail::check_mail_inbox()
+    }
+
+    #[zome_fn("hc_public")]
+    fn check_ack_inbox() -> ZomeApiResult<Vec<Address>> {
+        mail::check_ack_inbox()
+    }
 }
