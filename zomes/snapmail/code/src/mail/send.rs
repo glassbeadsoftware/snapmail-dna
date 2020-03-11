@@ -5,7 +5,6 @@ use hdk::{
     },
     holochain_core_types::{
         entry::Entry,
-        agent::AgentId,
         dna::entry_types::Sharing,
     }
 };
@@ -16,6 +15,7 @@ use hdk::error::ZomeApiError;
 use holochain_wasm_utils::holochain_persistence_api::hash::HashString;
 use crate::mail::{PendingMail, ReceipientKind};
 
+use crate::AgentAddress;
 
 pub enum SendSuccessKind {
     OK_DIRECT(Address),
@@ -26,9 +26,9 @@ pub enum SendSuccessKind {
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct SendTotalResult {
     outmail: Address,
-    to_pendings: HashMap<AgentId, Address>,
-    cc_pendings: HashMap<AgentId, Address>,
-    bcc_pendings: HashMap<AgentId, Address>,
+    to_pendings: HashMap<AgentAddress, Address>,
+    cc_pendings: HashMap<AgentAddress, Address>,
+    bcc_pendings: HashMap<AgentAddress, Address>,
 }
 
 impl SendTotalResult {
@@ -41,7 +41,7 @@ impl SendTotalResult {
         }
     }
 
-    pub fn add_pending(mut self, kind: super::ReceipientKind, agentId: &AgentId, address: Address) {
+    pub fn add_pending(mut self, kind: super::ReceipientKind, agentId: &AgentAddress, address: Address) {
         match kind {
             TO => self.to_pendings.insert(agentId.clone(), address),
             CC => self.cc_pendings.insert(agentId.clone(), address),
@@ -51,11 +51,11 @@ impl SendTotalResult {
 }
 
 ///
-fn send_mail_to(outmail_address: &Address, mail: &Mail, to_first: &AgentId) -> ZomeApiResult<SendSuccessKind> {
+fn send_mail_to(outmail_address: &Address, mail: &Mail, destination: &AgentAddress) -> ZomeApiResult<SendSuccessKind> {
     // First try sending directly to other Agent if Online
     let payload = serde_json::to_string(mail).unwrap();
     let result = hdk::send(
-        Address::from(to_first.clone()),
+        destination.clone(),
         payload,
         crate::DIRECT_SEND_TIMEOUT_MS.into(),
     );
@@ -78,9 +78,9 @@ fn send_mail_to(outmail_address: &Address, mail: &Mail, to_first: &AgentId) -> Z
 pub fn send_mail(
     subject: String,
     payload: String,
-    to: Vec<AgentId>,
-    cc: Vec<AgentId>,
-    bcc: Vec<AgentId>,
+    to: Vec<AgentAddress>,
+    cc: Vec<AgentAddress>,
+    bcc: Vec<AgentAddress>,
 ) -> ZomeApiResult<SendTotalResult> {
     let outmail = OutMail::create(subject, payload, to, cc, bcc);
     let outmail_entry = Entry::App("outmail".into(), outmail.into());

@@ -23,7 +23,6 @@ use hdk::{
 };
 use hdk::holochain_core_types::{
     entry::Entry,
-    agent::AgentId,
     dna::entry_types::Sharing,
 };
 
@@ -35,6 +34,8 @@ use hdk::holochain_json_api::{
 use hdk::holochain_persistence_api::{
     cas::content::Address
 };
+
+use crate::AgentAddress;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone, PartialEq)]
 pub enum ReceipientKind {
@@ -50,8 +51,8 @@ pub struct Mail {
     date_sent: u64,
     subject: String,
     payload: String,
-    to: Vec<AgentId>,
-    cc: Vec<AgentId>,
+    to: Vec<AgentAddress>,
+    cc: Vec<AgentAddress>,
 }
 
 impl Mail {
@@ -59,8 +60,8 @@ impl Mail {
         date_sent: u64,
         subject: String,
         payload: String,
-        to: Vec<AgentId>,
-        cc: Vec<AgentId>,
+        to: Vec<AgentAddress>,
+        cc: Vec<AgentAddress>,
     ) -> Self {
         Self {
             date_sent,

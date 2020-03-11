@@ -38,6 +38,8 @@ pub mod globals;
 pub use utils::*;
 pub use globals::*;
 
+pub type AgentAddress = Address;
+
 // see https://developer.holochain.org/api/0.0.42-alpha5/hdk/ for info on using the hdk library
 
 #[zome]
@@ -55,7 +57,7 @@ mod snapmail {
     }
 
     #[validate_agent]
-    pub fn validate_agent(validation_data: EntryValidationData<AgentId>) {
+    pub fn validate_agent(validation_data: EntryValidationData<AgentAddress>) {
         Ok(())
     }
 
@@ -118,9 +120,9 @@ mod snapmail {
     fn send_mail(
         subject: String,
         payload: String,
-        to: Vec<AgentId>,
-        cc: Vec<AgentId>,
-        bcc: Vec<AgentId>,
+        to: Vec<AgentAddress>,
+        cc: Vec<AgentAddress>,
+        bcc: Vec<AgentAddress>,
     ) -> ZomeApiResult<Address, Address> {
         if to.size() + cc.size() + bcc.size() < 1 {
             return ZomeApiError::Internal("Mail lacks receipients".into())

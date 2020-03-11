@@ -5,7 +5,6 @@ use hdk::{
     },
     holochain_core_types::{
         entry::Entry,
-        agent::AgentId,
     },
 };
 

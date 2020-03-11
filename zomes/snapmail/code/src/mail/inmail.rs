@@ -1,3 +1,4 @@
+use crate::AgentAddress;
 use super::{
     Mail, PendingMail,
 };
@@ -9,9 +10,9 @@ use hdk::{
     },
     holochain_core_types::{
         entry::Entry,
-        agent::AgentId,
     },
 };
+use hdk::error::ZomeApiError;
 
 //-------------------------------------------------------------------------------------------------
 // Definition
@@ -21,7 +22,7 @@ use hdk::{
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct InMail {
     mail: Mail,
-    from: AgentId,
+    from: AgentAddress,
     date_received: u64,
 }
 
@@ -69,7 +70,7 @@ pub fn inmail_def() -> ValidatingEntryType {
 //-------------------------------------------------------------------------------------------------
 
 impl InMail {
-    pub fn new(mail: Mail, from: AgentId, date_received: u64) -> Self {
+    pub fn new(mail: Mail, from: AgentAddress, date_received: u64) -> Self {
         Self {
             mail,
             from,
@@ -77,10 +78,10 @@ impl InMail {
         }
     }
 
-    pub fn from_pending(pending: PendingMail, from: AgentId) -> Result<Self> {
+    pub fn from_pending(pending: PendingMail, from: AgentAddress) -> Result<Self> {
         let maybe_mail = pending.decrypt(from);
         if maybe_mail.is_err() {
-            return Err();
+            return ZomeApiError();
         }
         let received_date = crate::snapmail_now();
         Self::new(mail, from.clone(), received_date)

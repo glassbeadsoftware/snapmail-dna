@@ -5,7 +5,6 @@ use hdk::{
     entry_definition::ValidatingEntryType,
     holochain_core_types::{
         entry::Entry,
-        agent::AgentId,
         dna::entry_types::Sharing,
     },
     holochain_persistence_api::{
@@ -13,8 +12,11 @@ use hdk::{
     },
 };
 
-use super::{
-    Mail, pending_mail::PendingMail,
+use crate::{
+    AgentAddress,
+    mail::{
+        Mail, pending_mail::PendingMail,
+    }
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -25,7 +27,7 @@ use super::{
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct OutMail {
     pub mail: Mail,
-    pub bcc: Vec<AgentId>,
+    pub bcc: Vec<AgentAddress>,
 }
 
 /// Entry definition
@@ -88,7 +90,7 @@ pub fn outmail_def() -> ValidatingEntryType {
 
 ///
 impl OutMail {
-    pub fn new(mail: Mail, bcc: Vec<AgentId>) -> Self {
+    pub fn new(mail: Mail, bcc: Vec<AgentAddress>) -> Self {
         Self {
             mail, bcc,
         }
@@ -97,9 +99,9 @@ impl OutMail {
     pub fn create(
         subject: String,
         payload: String,
-        to: Vec<AgentId>,
-        cc: Vec<AgentId>,
-        bcc: Vec<AgentId>,
+        to: Vec<AgentAddress>,
+        cc: Vec<AgentAddress>,
+        bcc: Vec<AgentAddress>,
     ) -> Self {
         assert_ne!(0, to.size() + cc.size(), bcc.size());
         // TODO: remove duplicate receipients

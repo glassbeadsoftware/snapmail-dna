@@ -6,7 +6,6 @@ use hdk::{
     },
     holochain_core_types::{
         entry::Entry,
-        agent::AgentId,
         link::LinkMatch,
     },
 };
@@ -70,7 +69,7 @@ impl Handle {
 /// get latest handle for this agent
 pub fn get_handle() -> Option<Entry> {
     let link_results = hdk::get_links(
-        &*hdk::AGENT_INITIAL_HASH,
+        &*hdk::AGENT_ADDRESS,
         LinkMatch::Exactly("handle"),
         LinkMatch::Any,
     ).expect("No reason for this to fail");
