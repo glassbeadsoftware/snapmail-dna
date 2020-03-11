@@ -45,7 +45,7 @@ fn get_pending_mail(pending_address: &Address) -> ZomeApiResult<(Address, Pendin
     let maybe_entry_result = hdk::get_entry_result(pending_address, get_options);
     if maybe_entry_result.is_err() {
         hdk::debug("Failed getting pending_address");
-        continue;
+        return Err(ZomeApiError::Internal("Failed getting pending_address".into()));
     }
     let entry_result = maybe_entry_result.unwrap();
     let entry_item = match entry_result.result {
@@ -55,6 +55,8 @@ fn get_pending_mail(pending_address: &Address) -> ZomeApiResult<(Address, Pendin
         _ => panic!("Asked for latest so should get Single"),
     };
     let pending = crate::into_typed::<PendingMail>(entry_item.entry.unwrap()).expect("Should be PendingMail");
+    assert!(entry_item.headers.size() > 0);
+    assert!(entry_item.headers[0].provenances()[0] > 0);
     let author = entry_item.headers[0].provenances()[0].source();
     Ok((author, pending))
 }
@@ -67,9 +69,9 @@ pub fn check_mail_inbox() -> ZomeApiResult<Vec<Address>> {
     let mut res = Vec::new();
     for pending_address in &links_result.addresses() {
         //  1. Get entry on the DHT
-
+        let (author, pending) = get_pending_mail(pending_address)?;
         //  2. Convert and Commit as InMail
-        let inmail = InMail::from_pending(pending, &author);
+        let inmail = InMail::from_pending(pending, author);
         //  3. Commit & Share AckReceipt
         //  4. Delete PendingMail entry
         //  5. Remove link from my agentId
