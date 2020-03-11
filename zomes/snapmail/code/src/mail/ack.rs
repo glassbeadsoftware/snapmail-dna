@@ -47,9 +47,9 @@ pub fn ackreceipt_encrypted_def() -> ValidatingEntryType {
 }
 
 impl AckReceiptEncrypted {
-    pub fn new(outmail: Address) -> Self {
+    pub fn new(outmail_address: Address) -> Self {
         Self {
-            outmail_address: outmail,
+            outmail_address,
         }
     }
 }

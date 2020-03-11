@@ -24,6 +24,7 @@ pub struct InMail {
     mail: Mail,
     from: AgentAddress,
     date_received: u64,
+    outmail_address: Address,
 }
 
 pub fn inmail_def() -> ValidatingEntryType {
@@ -70,20 +71,21 @@ pub fn inmail_def() -> ValidatingEntryType {
 //-------------------------------------------------------------------------------------------------
 
 impl InMail {
-    pub fn new(mail: Mail, from: AgentAddress, date_received: u64) -> Self {
+    pub fn new(mail: Mail, from: AgentAddress, date_received: u64, outmail_address: Address) -> Self {
         Self {
             mail,
             from,
             date_received,
+            outmail_address,
         }
     }
 
-    pub fn from_pending(pending: PendingMail, from: AgentAddress) -> Result<Self> {
-        let maybe_mail = pending.decrypt(from);
-        if maybe_mail.is_err() {
-            return ZomeApiError();
-        }
+    pub fn from_pending(pending: PendingMail, from: AgentAddress) -> Self {
+//        let maybe_mail = pending.decrypt(from);
+//        if maybe_mail.is_err() {
+//            return ZomeApiError();
+//        }
         let received_date = crate::snapmail_now();
-        Self::new(mail, from.clone(), received_date)
+        Self::new(mail, from.clone(), received_date, pending.outmail_address)
     }
 }

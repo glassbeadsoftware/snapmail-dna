@@ -19,8 +19,8 @@ use super::Mail;
 /// hence only the receipient knows it has pending mail.
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct PendingMail {
-    mail: Mail,
-    outmail_address: Address,
+    pub mail: Mail,
+    pub outmail_address: Address,
 }
 
 pub fn pendingmail_def() -> ValidatingEntryType {

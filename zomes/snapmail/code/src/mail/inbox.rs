@@ -157,17 +157,29 @@ pub fn check_ack_inbox() -> ZomeApiResult<Vec<Address>> {
     Ok(new_acks)
 }
 
-///
-pub fn acknowledge_mail(inmail_address: Address) {
-    // FIXME
+/// Return address of newly created AckReceiptEncrypted
+pub fn acknowledge_mail(inmail_address: &Address) -> ZomeApiResult<Address> {
     //  1. Get InMail
+    let maybe_InMail = hdk::utils::get_as_type::<InMail>(address.clone())?;
     //  2. Make sure it has not already been acknowledged
-    //  3. Create & Commit AckReceipt
-    //  4. Share AckReceipt
+    let res_count = hdk::get_links_count(inmail_address, "receipt_private".into(), LinkMatch::Any)?;
+    if res.count > 0 {
+        return Err(ZomeApiError::Internal("Mail has already been acknowledged (private)".to_string()));
+    }
+    let res_count = hdk::get_links_count(inmail_address, "receipt_encrypted".into(), LinkMatch::Any)?;
+    if res.count > 0 {
+        return Err(ZomeApiError::Internal("Mail has already been acknowledged (encrypted)".to_string()));
+    }
+    //  3. Create & Commit AckReceiptEncrypted
+    let ack = AckReceiptEncrypted::new(outmail_address.clone());
+    let ack_entry = Entry::App("ackreceipt_encrypted".into(), ack.into());
+    let ack_address = hdk::commit_entry(&ack_entry)?;
+    Ok(ack_address)
 }
 
 ///
-pub fn receive_direct_mail() {
+pub fn receive_direct_mail(from: AgentAddress, msg_json: JsonString) -> String {
     // FIXME
+    String::new()
 }
 

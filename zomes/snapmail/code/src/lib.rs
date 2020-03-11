@@ -64,6 +64,7 @@ mod snapmail {
     #[receive]
     pub fn receive(from: Address, msg_json: JsonString) -> String {
         hdk::debug(format!("Received from: {:?}", from)).ok();
+        return mail::receive_direct_mail(from, msg_json);
     }
 
     // -- Entry definitions -- //
