@@ -1,4 +1,4 @@
-use crate::AgentAddress;
+use crate::{AgentAddress, MailMessage};
 use super::{
     Mail, PendingMail,
 };
@@ -78,6 +78,11 @@ impl InMail {
             date_received,
             outmail_address,
         }
+    }
+
+    pub fn from_direct(from: AgentAddress, dm: MailMessage) -> Self {
+        let received_date = crate::snapmail_now();
+        Self::new(dm.mail, from.clone(), received_date, dm.outmail_address)
     }
 
     pub fn from_pending(pending: PendingMail, from: AgentAddress) -> Self {

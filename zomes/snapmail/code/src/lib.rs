@@ -33,8 +33,11 @@ use std::time::SystemTime;
 
 mod mail;
 mod handle;
-pub mod utils;
-pub mod globals;
+mod utils;
+mod protocol;
+mod globals;
+
+pub use protocol::*;
 pub use utils::*;
 pub use globals::*;
 
@@ -48,11 +51,12 @@ mod snapmail {
     // -- System -- //
 
     use hdk::error::ZomeApiError;
+    use crate::AgentAddress;
 
 
     #[init]
     fn init() {
-        // TODO: create username?
+        // TODO: create initial username? (random?)
         Ok(())
     }
 
@@ -61,10 +65,23 @@ mod snapmail {
         Ok(())
     }
 
+    /// Receive point for one of the Protocol messages
     #[receive]
     pub fn receive(from: Address, msg_json: JsonString) -> String {
         hdk::debug(format!("Received from: {:?}", from)).ok();
-        return mail::receive_direct_mail(from, msg_json);
+        let maybe_msg: Result<DirectMessageProtocol, _> = msg_json.try_into();
+        if let Err(err) = maybe_msg {
+            return format!("error: {}", err);
+        }
+        match maybe_msg.unwrap() {
+            DirectMessageProtocol::MailMessage(mail) => {
+                return mail::receive_direct_mail(from, mail);
+            },
+            DirectMessageProtocol::AckMessage(ack) => {
+                return mail::receive_direct_ack(from, ack);
+            }
+        };
+        return format!("error: unhandled message type")
     }
 
     // -- Entry definitions -- //
@@ -106,6 +123,7 @@ mod snapmail {
     #[zome_fn("hc_public")]
     fn set_handle(name: String) -> ZomeApiResult<Address> { handle::set_handle(name) }
 
+    /// Get this agent's latest handle
     #[zome_fn("hc_public")]
     fn get_handle() -> String {
         let maybe_current_handle_entry = handle::get_handle();
@@ -117,6 +135,9 @@ mod snapmail {
         return "<noname>".to_string();
     }
 
+    /// Send mail to all receipients
+    /// Returns Map of PendingMail entry per receipient
+    /// Conditions: Mail must have at least one receipient
     #[zome_fn("hc_public")]
     fn send_mail(
         subject: String,
@@ -124,25 +145,51 @@ mod snapmail {
         to: Vec<AgentAddress>,
         cc: Vec<AgentAddress>,
         bcc: Vec<AgentAddress>,
-    ) -> ZomeApiResult<Address, Address> {
+    ) -> ZomeApiResult<SendTotalResult> {
         if to.size() + cc.size() + bcc.size() < 1 {
             return ZomeApiError::Internal("Mail lacks receipients".into())
         }
         mail::send_mail(subject, payload, to, cc, bcc)
     }
 
+    /// Get an InMail or OutMail at given address.
     #[zome_fn("hc_public")]
     fn get_mail(address: Address) -> Option<Result<InMail, OutMail>> {
         mail::get_mail(address)
     }
 
+    /// Return list of all InMails that this agent did not acknowledge.
+    #[zome_fn("hc_public")]
+    fn get_all_unread_mail() -> ZomeApiResult<Vec<Address>> {
+        mail::get_all_unread_mail()
+    }
+
+    /// Check PendingMails sent to this agent. Converts each into an InMail.
+    /// Return list of created InMail entries
     #[zome_fn("hc_public")]
     fn check_mail_inbox() -> ZomeApiResult<Vec<Address>> {
         mail::check_mail_inbox()
     }
 
+    /// Check all AckReceiptEncrypted sent to this agent.
+    /// Adds them as links to our OutMails.
+    /// Return list of all newly received AckReceiptEncrypted
     #[zome_fn("hc_public")]
     fn check_ack_inbox() -> ZomeApiResult<Vec<Address>> {
         mail::check_ack_inbox()
+    }
+
+    /// Create & share an AckReceipt for a mail we received.
+    /// Return Address of AckReceipt.
+    #[zome_fn("hc_public")]
+    pub fn mark_mail_as_read(inmail_address: &Address) -> ZomeApiResult<Address> {
+        mail::mark_mail_as_read(inmail_address)
+    }
+
+    /// Check if agent received AckReceipts from all receipients of one of this agent's OutMail.
+    /// If false, returns list of agents who's receipt is missing.
+    #[zome_fn("hc_public")]
+    pub fn have_received_all_receipts(outmail_address: &Address) -> ZomeApiResult<Result<(), Vec<AgentAddress>>> {
+        mail::have_received_all_receipts(outmail_address)
     }
 }

@@ -16,6 +16,8 @@ use holochain_wasm_utils::holochain_persistence_api::hash::HashString;
 use crate::mail::{PendingMail, ReceipientKind};
 
 use crate::AgentAddress;
+use crate::protocol::{MailMessage, DirectMessageProtocol};
+
 
 pub enum SendSuccessKind {
     OK_DIRECT(Address),
@@ -53,7 +55,11 @@ impl SendTotalResult {
 ///
 fn send_mail_to(outmail_address: &Address, mail: &Mail, destination: &AgentAddress) -> ZomeApiResult<SendSuccessKind> {
     // First try sending directly to other Agent if Online
-    let payload = serde_json::to_string(mail).unwrap();
+    let msg = MailMessage {
+        outmail_address: outmail_address.clone(),
+        mail: Mail.clone(),
+    };
+    let payload = serde_json::to_string(DirectMessageProtocol::Mail(msg)).unwrap();
     let result = hdk::send(
         destination.clone(),
         payload,

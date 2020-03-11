@@ -20,7 +20,10 @@ use holochain_wasm_utils::{
         GetEntryOptions, StatusRequestKind, GetEntryResultType,
     },
 };
-use crate::mail::ack::AckReceiptEncrypted;
+use crate::{
+    mail::ack::AckReceiptEncrypted,
+    AgentAddress, DirectMessageProtocol, MailMessage,
+};
 
 
 /// Get InMail our OutMail struct in local source chain at address
@@ -157,29 +160,32 @@ pub fn check_ack_inbox() -> ZomeApiResult<Vec<Address>> {
     Ok(new_acks)
 }
 
-/// Return address of newly created AckReceiptEncrypted
-pub fn acknowledge_mail(inmail_address: &Address) -> ZomeApiResult<Address> {
-    //  1. Get InMail
-    let maybe_InMail = hdk::utils::get_as_type::<InMail>(address.clone())?;
-    //  2. Make sure it has not already been acknowledged
-    let res_count = hdk::get_links_count(inmail_address, "receipt_private".into(), LinkMatch::Any)?;
-    if res.count > 0 {
-        return Err(ZomeApiError::Internal("Mail has already been acknowledged (private)".to_string()));
-    }
-    let res_count = hdk::get_links_count(inmail_address, "receipt_encrypted".into(), LinkMatch::Any)?;
-    if res.count > 0 {
-        return Err(ZomeApiError::Internal("Mail has already been acknowledged (encrypted)".to_string()));
-    }
-    //  3. Create & Commit AckReceiptEncrypted
-    let ack = AckReceiptEncrypted::new(outmail_address.clone());
-    let ack_entry = Entry::App("ackreceipt_encrypted".into(), ack.into());
-    let ack_address = hdk::commit_entry(&ack_entry)?;
-    Ok(ack_address)
+///
+pub fn receive_direct_ack(from: AgentAddress, ack: AckMessage) -> String {
+    // FIXME
 }
 
 ///
-pub fn receive_direct_mail(from: AgentAddress, msg_json: JsonString) -> String {
-    // FIXME
-    String::new()
+pub fn receive_direct_mail(from: AgentAddress, mail_msg: MailMessage) -> String {
+    // Create InMail
+    let inmail = InMail::from_direct(author, mail_msg);
+    let inmail_entry = Entry::App("inmail".into(), inmail.into());
+    let maybe_inmail_address = hdk::commit_entry(&inmail_entry);
+    if let Err(err) = maybe_inmail_address {
+        hdk::debug("Failed committing inMail from DM:");
+        hdk::debug(err);
+        return "error: Committing inMail failed".into();
+    }
+    // Emit signal
+     hdk::emit_signal("received_mail", JsonString::from_json(&format!(
+         "{{message: {}}}", mail_msg
+     )));
+
+    // Done
+    return "ok: received".into();
 }
 
+///
+pub fn get_all_unread_mail() -> ZomeApiResult<Vec<Address>> {
+    // FIXME
+}
