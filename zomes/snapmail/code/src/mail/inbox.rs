@@ -20,6 +20,8 @@ use holochain_wasm_utils::{
         GetEntryOptions, StatusRequestKind, GetEntryResultType,
     },
 };
+use crate::mail::ack::AckReceiptEncrypted;
+
 
 /// Get InMail our OutMail struct in local source chain at address
 pub fn get_mail(address: Address) -> Option<Result<InMail, OutMail>> {
@@ -35,7 +37,8 @@ pub fn get_mail(address: Address) -> Option<Result<InMail, OutMail>> {
 }
 
 
-fn get_pending_mail(pending_address: &Address) -> ZomeApiResult<(Address, PendingMail)> {
+/// Conditions: Must be a single author entry type
+fn get_entry_and_author(address: &Address) -> ZomeApiResult<(AgentAddress, Entry)> {
     let get_options = GetEntryOptions {
         status_request: StatusRequestKind::Latest,
         entry: true,
@@ -43,9 +46,10 @@ fn get_pending_mail(pending_address: &Address) -> ZomeApiResult<(Address, Pendin
         timeout: Timeout::default(),
     };
     let maybe_entry_result = hdk::get_entry_result(pending_address, get_options);
-    if maybe_entry_result.is_err() {
-        hdk::debug("Failed getting pending_address");
-        return Err(ZomeApiError::Internal("Failed getting pending_address".into()));
+    if let Err(err) = maybe_entry_result {
+        hdk::debug("Failed getting address:");
+        hdk::debug(&err);
+        return Err(err);
     }
     let entry_result = maybe_entry_result.unwrap();
     let entry_item = match entry_result.result {
@@ -54,37 +58,116 @@ fn get_pending_mail(pending_address: &Address) -> ZomeApiResult<(Address, Pendin
         },
         _ => panic!("Asked for latest so should get Single"),
     };
-    let pending = crate::into_typed::<PendingMail>(entry_item.entry.unwrap()).expect("Should be PendingMail");
     assert!(entry_item.headers.size() > 0);
     assert!(entry_item.headers[0].provenances()[0] > 0);
     let author = entry_item.headers[0].provenances()[0].source();
     Ok((author, pending))
 }
 
+fn get_pending_mail(pending_address: &Address) -> ZomeApiResult<(AgentAddress, PendingMail)> {
+    let (author, entry) = get_entry_and_author(pending_address)?;
+    let pending = crate::into_typed::<PendingMail>(entry.unwrap()).expect("Should be PendingMail");
+    Ok((author, pending))
+}
+
+fn get_ack_encrypted(ack_address: &Address) -> ZomeApiResult<(AgentAddress, AckReceiptEncrypted)> {
+    let (author, entry) = get_entry_and_author(ack_address)?;
+    let ack = crate::into_typed::<AckReceiptEncrypted>(entry.unwrap()).expect("Should be AckReceiptEncrypted");
+    Ok((author, ack))
+}
+
+/// Return list of new InMail addresses
 pub fn check_mail_inbox() -> ZomeApiResult<Vec<Address>> {
-    // FIXME
     // Lookup `mail_inbox` links on my agentId
     let links_result = hdk::get_links(&HDK::AGENT_ADDRESS, LinkMatch::Exactly("mail_inbox"), LinkMatch::Any)?;
     // For each link
-    let mut res = Vec::new();
+    let mut new_inmails = Vec::new();
     for pending_address in &links_result.addresses() {
         //  1. Get entry on the DHT
-        let (author, pending) = get_pending_mail(pending_address)?;
+        let res = get_pending_mail(pending_address);
+        if let Err(err) = res {
+            continue;
+        }
+        let (author, pending) = res.unwrap();
         //  2. Convert and Commit as InMail
         let inmail = InMail::from_pending(pending, author);
-        //  3. Commit & Share AckReceipt
+        let inmail_entry = Entry::App("inmail".into(), inmail.into());
+        let maybe_inmail_address = hdk::commit_entry(&inmail_entry);
+        if maybe_inmail_address.is_err() {
+            hdk::debug("Failed committing inMail");
+            continue;
+        }
+        new_inmails.push(maybe_inmail_address.unwrap());
+        //  3. Remove link from my agentId
+        let res = hdk::remove_link(
+            &AGENT_ADDRESS,
+            &pending_address,
+            "mail_inbox",
+            LinkMatch::Any,
+        );
+        if let Err(err) = res {
+            hdk::debug("Remove ``mail_inbox`` link failed:");
+            hdk::debug(err);
+            continue;
+        }
         //  4. Delete PendingMail entry
-        //  5. Remove link from my agentId
+        let res = hdk::remove_entry(pending_address);
+        if let Err(err) = res {
+            hdk::debug("Delete PendingMail failed:");
+            hdk::debug(err);
+            continue;
+        }
     }
-    Ok(res)
+    Ok(new_inmails)
 }
 
+/// Return list of AckReceiptEncryted addresses
 pub fn check_ack_inbox() -> ZomeApiResult<Vec<Address>> {
-    // FIXME
     // Lookup `ack_inbox` links on my agentId
+    let links_result = hdk::get_links(&HDK::AGENT_ADDRESS, LinkMatch::Exactly("ack_inbox"), LinkMatch::Any)?;
     // For each link
-    //  - Get entry on the DHT
-    //  - Add Acknowledgement link to my OutMail
-    //  - Delete AckReceipt entry
-    //  - Delete link from my agentId
+    let mut new_acks = Vec::new();
+    for ack_address in &links_result.addresses() {
+        //  - Get entry on the DHT
+        let res = get_ack_encrypted(ack_address);
+        if let Err(err) = res {
+            continue;
+        }
+        let (author, ack) = res.unwrap();
+        //  - Add Acknowledgement link to my OutMail
+        let res = hdk::link_entries(&HDK::AGENT_ADDRESS, &ack_address, "receipt_encrypted", "");
+        if let Err(err) = res {
+            hdk::debug("Add ``receipt_encrypted`` link failed:");
+            hdk::debug(err);
+            continue;
+        }
+        //  - Delete AckReceipt link from my agentId
+        let res = hdk::remove_link(
+            &AGENT_ADDRESS,
+            &ack_address,
+            "ack_inbox",
+            LinkMatch::Any,
+        );
+        if let Err(err) = res {
+            hdk::debug("Remove ``ack_inbox`` link failed:");
+            hdk::debug(err);
+            continue;
+        }
+    }
+    Ok(new_acks)
 }
+
+///
+pub fn acknowledge_mail(inmail_address: Address) {
+    // FIXME
+    //  1. Get InMail
+    //  2. Make sure it has not already been acknowledged
+    //  3. Create & Commit AckReceipt
+    //  4. Share AckReceipt
+}
+
+///
+pub fn receive_direct_mail() {
+    // FIXME
+}
+

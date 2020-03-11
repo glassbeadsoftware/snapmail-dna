@@ -22,11 +22,11 @@ pub fn into_typed<R: TryFrom<AppEntryValue>>(entry: Entry) -> ZomeApiResult<R> {
     match entry {
         Entry::App(_, entry_value) => R::try_from(entry_value).map_err(|_| {
             ZomeApiError::Internal(
-                "Could not convert get_links result to requested type".to_string(),
+                "Could not convert entry to requested type".to_string(),
             )
         }),
         _ => Err(ZomeApiError::Internal(
-            "get_links did not return an app entry".to_string(),
+            "entry did not return an entry of type App".to_string(),
         )),
     }
 }
