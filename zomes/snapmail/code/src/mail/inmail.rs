@@ -21,10 +21,10 @@ use hdk::error::ZomeApiError;
 /// Entry representing a received mail. It is private.
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct InMail {
-    mail: Mail,
-    from: AgentAddress,
-    date_received: u64,
-    outmail_address: Address,
+    pub mail: Mail,
+    pub from: AgentAddress,
+    pub date_received: u64,
+    pub outmail_address: Address,
 }
 
 pub fn inmail_def() -> ValidatingEntryType {

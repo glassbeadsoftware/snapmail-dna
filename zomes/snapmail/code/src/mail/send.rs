@@ -20,7 +20,7 @@ use crate::protocol::{MailMessage, DirectMessageProtocol};
 
 
 pub enum SendSuccessKind {
-    OK_DIRECT(Address),
+    OK_DIRECT,
     OK_PENDING(Address),
 }
 
@@ -54,27 +54,35 @@ impl SendTotalResult {
 
 ///
 fn send_mail_to(outmail_address: &Address, mail: &Mail, destination: &AgentAddress) -> ZomeApiResult<SendSuccessKind> {
-    // First try sending directly to other Agent if Online
+    // 1. First try sending directly to other Agent if Online
+    //   a. Create DM
     let msg = MailMessage {
         outmail_address: outmail_address.clone(),
         mail: Mail.clone(),
     };
     let payload = serde_json::to_string(DirectMessageProtocol::Mail(msg)).unwrap();
+    //   b. Send DM
     let result = hdk::send(
         destination.clone(),
         payload,
         crate::DIRECT_SEND_TIMEOUT_MS.into(),
     );
+    //   c. Check Response
     if let Ok(response) = result {
-        // response should be AckReceiptPrivate address
-        let ack_address = HashString::from(response);
-        hdk::link_entries(&outmail_address, &ack_address, "receipt_private", "")?;
-        return Ok(SendResult::OK_DIRECT(ack_address));
+        hdk::debug(format!("Received response: {:?}", response)).ok();
+        let maybe_msg: Result<DirectMessageProtocol, _> = msg_json.try_into();
+        if let Ok(msg) = maybe_msg {
+            if let DirectMessageProtocol::Success(_) = msg {
+                return Ok(SendResult::OK_DIRECT);
+            }
+        }
     };
-    // Direct Send failed, so send to DHT instead by creating a PendingMail
+    // 2. Direct Send failed, so send to DHT instead by creating a PendingMail
     let pending = PendingMail::new(mail.clone(), outmail_address.clone());
     let pending_entry = Entry::App("pendingmail".into(), outmail.into());
     let pending_address = hdk::commit_entry(&pending_entry)?;
+    let _ = hdk::link_entries(&outmail_address, &pending_address, "pending", pending_address.into())?;
+    let _ = hdk::link_entries(&destination, &pending_address, "mail_inbox", &HDK::AGENT_ADDRESS)?;
     Ok(SendResult::OK_PENDING(pending_address))
 }
 

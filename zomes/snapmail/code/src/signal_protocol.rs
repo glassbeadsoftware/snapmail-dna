@@ -5,25 +5,26 @@ use hdk::{
         cas::content::Address
     },
 };
+use crate::{
+    AgentAddress,
+    mail::Mail,
+};
 
-use crate::mail::Mail;
 
 #[derive(Clone, Deserialize)]
-pub enum DirectMessageProtocol {
-    Mail(MailMessage),
-    Ack(AckMessage),
-    Failure(String),
-    Success(String),
+pub enum SignalProtocol {
+    ReceivedMail(ReceivedMail),
+    ReceivedAck(ReceivedAck),
 }
 
 #[derive(Clone, Deserialize)]
-pub struct MailMessage {
-    pub outmail_address: Address,
+pub struct ReceivedMail {
+    pub from: AgentAddress,
     pub mail: Mail,
 }
 
 #[derive(Clone, Deserialize)]
-pub struct AckMessage {
-    outmail_address: Address,
-    ack_address: Address,
+pub struct ReceivedAck {
+    pub from: AgentAddress,
+    pub for_mail: Address,
 }

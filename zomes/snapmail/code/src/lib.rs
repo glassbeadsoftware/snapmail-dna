@@ -35,8 +35,10 @@ mod mail;
 mod handle;
 mod utils;
 mod protocol;
+mod signal_protocol;
 mod globals;
 
+pub use signal_protocol::*;
 pub use protocol::*;
 pub use utils::*;
 pub use globals::*;

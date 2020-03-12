@@ -103,6 +103,7 @@ pub fn set_handle(name: String) -> ZomeApiResult<Address> {
     }
     // First Handle ever, commit entry
     let entry_address = hdk::commit_entry(&app_entry)?;
+    let _ = hdk::link_entries(&HDK::AGENT_ADDRESS, &ack_address, "handle", "")?;
     return Ok(entry_address);
 }
 

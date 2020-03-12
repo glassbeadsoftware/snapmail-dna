@@ -13,6 +13,10 @@ use hdk::{
         agent::AgentId,
         time::Timeout,
     },
+    holochain_json_api::{
+        json::JsonString,
+        error::JsonError
+    },
 };
 use holochain_wasm_utils::{
     holochain_core_types::link::LinkMatch,
@@ -20,9 +24,11 @@ use holochain_wasm_utils::{
         GetEntryOptions, StatusRequestKind, GetEntryResultType,
     },
 };
+
 use crate::{
     mail::ack::AckReceiptEncrypted,
-    AgentAddress, DirectMessageProtocol, MailMessage,
+    AgentAddress, DirectMessageProtocol, MailMessage, AckMessage,
+    ReceivedMail,
 };
 
 
@@ -138,7 +144,11 @@ pub fn check_ack_inbox() -> ZomeApiResult<Vec<Address>> {
         }
         let (author, ack) = res.unwrap();
         //  - Add Acknowledgement link to my OutMail
-        let res = hdk::link_entries(&HDK::AGENT_ADDRESS, &ack_address, "receipt_encrypted", "");
+        let res = hdk::link_entries(
+            &HDK::AGENT_ADDRESS,
+            &ack_address,
+            "receipt_encrypted",
+            author.into());
         if let Err(err) = res {
             hdk::debug("Add ``receipt_encrypted`` link failed:");
             hdk::debug(err);
@@ -166,26 +176,52 @@ pub fn receive_direct_ack(from: AgentAddress, ack: AckMessage) -> String {
 }
 
 ///
-pub fn receive_direct_mail(from: AgentAddress, mail_msg: MailMessage) -> String {
+pub fn receive_direct_mail(from: AgentAddress, mail_msg: MailMessage) -> DirectMessageProtocol {
     // Create InMail
     let inmail = InMail::from_direct(author, mail_msg);
     let inmail_entry = Entry::App("inmail".into(), inmail.into());
     let maybe_inmail_address = hdk::commit_entry(&inmail_entry);
     if let Err(err) = maybe_inmail_address {
-        hdk::debug("Failed committing inMail from DM:");
-        hdk::debug(err);
-        return "error: Committing inMail failed".into();
+        let response_str = "Failed committing InMail";
+        hdk::debug(format!("{}: {}", response_str, err));
+        return DirectMessageProtocol::Failure(response_str.to_string());
     }
     // Emit signal
-     hdk::emit_signal("received_mail", JsonString::from_json(&format!(
-         "{{message: {}}}", mail_msg
-     )));
+    let signal = ReceivedMail {
+        from: from.clone(),
+        mail: mail_msg.mail.clone(),
+    };
+    let signal_json = serde_json::to_string(signal).expect("Should stringify");
+     hdk::emit_signal("received_mail", JsonString::from_json(&signal_json));
 
     // Done
-    return "ok: received".into();
+    return DirectMessageProtocol::Success(String::new());
 }
 
-///
+/// Zome Function
+/// Return list of all InMails that this agent did not acknowledge.
 pub fn get_all_unread_mail() -> ZomeApiResult<Vec<Address>> {
     // FIXME
+    // 1. Get all InMails with query
+    let result = hdk::query("inmail".into(),
+    0, 0)?;
+    // For each InMail
+    let mut unreads = Vec::new();
+    for inmail_address in &result {
+        //   2. Get Acknowledgment private link
+        let res_count = hdk::get_links_count(inmail_address, "receipt_private".into(), LinkMatch::Any)?;
+        //      b. if true continue
+        if res.count > 0 {
+            continue;
+        }
+        //   3. Get Acknowledgment encrypted link
+        let res_count = hdk::get_links_count(inmail_address, "receipt_encrypted".into(), LinkMatch::Any)?;
+        //      b. if true continue
+        if res.count > 0 {
+            continue;
+        }
+        //   4. Add to result list
+        unreads.push(inmail_address.clone());
+    }
+    Ok(unreads)
 }
