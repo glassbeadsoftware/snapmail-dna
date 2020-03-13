@@ -23,9 +23,9 @@ pub struct PendingMail {
     pub outmail_address: Address,
 }
 
-pub fn pendingmail_def() -> ValidatingEntryType {
+pub fn pending_mail_def() -> ValidatingEntryType {
     entry!(
-        name: "pendingmail",
+        name: "pending_mail",
         description: "Entry for a mail held in the DHT waiting to be received by its receipient",
         sharing: Sharing::Encrypted,
         validation_package: || {

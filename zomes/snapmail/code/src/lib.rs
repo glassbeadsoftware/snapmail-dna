@@ -104,8 +104,8 @@ mod snapmail {
     }
 
     #[entry_def]
-    fn pendingmail_def() -> ValidatingEntryType {
-        mail::pendingmail_def()
+    fn pending_mail_def() -> ValidatingEntryType {
+        mail::pending_mail_def()
     }
 
     #[entry_def]
@@ -162,36 +162,36 @@ mod snapmail {
 
     /// Return list of all InMails that this agent did not acknowledge.
     #[zome_fn("hc_public")]
-    fn get_all_unread_mail() -> ZomeApiResult<Vec<Address>> {
-        mail::get_all_unread_mail()
+    fn get_all_arrived_mail() -> ZomeApiResult<Vec<Address>> {
+        mail::get_all_arrived_mail()
     }
 
     /// Check PendingMails sent to this agent. Converts each into an InMail.
     /// Return list of created InMail entries
     #[zome_fn("hc_public")]
-    fn check_mail_inbox() -> ZomeApiResult<Vec<Address>> {
-        mail::check_mail_inbox()
+    fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
+        mail::check_incoming_mail()
     }
 
     /// Check all AckReceiptEncrypted sent to this agent.
     /// Adds them as links to our OutMails.
     /// Return list of all newly received AckReceiptEncrypted
     #[zome_fn("hc_public")]
-    fn check_ack_inbox() -> ZomeApiResult<Vec<Address>> {
-        mail::check_ack_inbox()
+    fn check_incoming_ack() -> ZomeApiResult<Vec<Address>> {
+        mail::check_incoming_ack()
     }
 
     /// Create & share an AckReceipt for a mail we received.
     /// Return Address of AckReceipt.
     #[zome_fn("hc_public")]
-    pub fn mark_mail_as_read(inmail_address: &Address) -> ZomeApiResult<Address> {
-        mail::mark_mail_as_read(inmail_address)
+    pub fn acknowledge_mail(inmail_address: &Address) -> ZomeApiResult<Address> {
+        mail::acknowledge_mail(inmail_address)
     }
 
     /// Check if agent received AckReceipts from all receipients of one of this agent's OutMail.
     /// If false, returns list of agents who's receipt is missing.
     #[zome_fn("hc_public")]
-    pub fn have_received_all_receipts(outmail_address: &Address) -> ZomeApiResult<Result<(), Vec<AgentAddress>>> {
-        mail::have_received_all_receipts(outmail_address)
+    pub fn has_been_received(outmail_address: &Address) -> ZomeApiResult<Result<(), Vec<AgentAddress>>> {
+        mail::has_been_received(outmail_address)
     }
 }

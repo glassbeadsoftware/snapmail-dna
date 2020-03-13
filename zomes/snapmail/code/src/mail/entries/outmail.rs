@@ -69,7 +69,7 @@ pub fn outmail_def() -> ValidatingEntryType {
                 }
             ),
             to!(
-                "pendingmail",
+                "pending_mail",
                 link_type: "pending",
                 validation_package: || {
                     hdk::ValidationPackageDefinition::Entry

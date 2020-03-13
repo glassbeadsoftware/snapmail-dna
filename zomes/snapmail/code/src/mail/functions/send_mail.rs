@@ -79,7 +79,7 @@ fn send_mail_to(outmail_address: &Address, mail: &Mail, destination: &AgentAddre
     };
     // 2. Direct Send failed, so send to DHT instead by creating a PendingMail
     let pending = PendingMail::new(mail.clone(), outmail_address.clone());
-    let pending_entry = Entry::App("pendingmail".into(), outmail.into());
+    let pending_entry = Entry::App("pending_mail".into(), outmail.into());
     let pending_address = hdk::commit_entry(&pending_entry)?;
     let _ = hdk::link_entries(&outmail_address, &pending_address, "pending", pending_address.into())?;
     let _ = hdk::link_entries(&destination, &pending_address, "mail_inbox", &HDK::AGENT_ADDRESS)?;
