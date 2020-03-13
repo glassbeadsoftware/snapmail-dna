@@ -14,8 +14,8 @@ use hdk::{
 
 use crate::{
     AgentAddress,
-    mail::{
-        Mail, pending_mail::PendingMail,
+    mail::entries::{
+        Mail, PendingMail,
     }
 };
 

@@ -1,3 +1,15 @@
+use hdk::{
+    holochain_core_types::entry::Entry,
+    holochain_json_api::json::JsonString,
+};
+use crate::{
+    mail::entries::{
+        ack::AckReceiptEncrypted,
+        InMail,
+    },
+    AgentAddress, DirectMessageProtocol, MailMessage, AckMessage,
+    ReceivedMail,
+};
 
 
 ///

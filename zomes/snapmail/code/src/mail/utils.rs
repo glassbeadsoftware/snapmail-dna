@@ -1,8 +1,3 @@
-
-use super::{
-    Mail, PendingMail, InMail, OutMail,
-};
-
 use hdk::{
     error::{ZomeApiError, ZomeApiResult},
     entry_definition::ValidatingEntryType,
@@ -27,9 +22,8 @@ use holochain_wasm_utils::{
 };
 
 use crate::{
-    mail::ack::AckReceiptEncrypted,
-    AgentAddress, DirectMessageProtocol, MailMessage, AckMessage,
-    ReceivedMail,
+    mail::entries::*,
+    AgentAddress, DirectMessageProtocol, MailMessage, AckMessage, ReceivedMail,
 };
 
 /// Conditions: Must be a single author entry type

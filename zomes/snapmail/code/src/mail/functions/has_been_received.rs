@@ -10,7 +10,7 @@ use holochain_wasm_utils::{
 };
 use crate::{
     AgentAddress,
-    mail::{
+    mail::entries::{
         OutMail, InMail,
     },
 };

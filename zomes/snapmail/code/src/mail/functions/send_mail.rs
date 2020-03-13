@@ -1,5 +1,5 @@
 use hdk::{
-    error::ZomeApiResult,
+    error::{ZomeApiResult, ZomeApiError},
     holochain_persistence_api::{
         cas::content::Address
     },
@@ -10,14 +10,14 @@ use hdk::{
 };
 
 use std::collections::HashMap;
-use super::{Mail, OutMail};
-use hdk::error::ZomeApiError;
 use holochain_wasm_utils::holochain_persistence_api::hash::HashString;
-use crate::mail::{PendingMail, ReceipientKind};
-
-use crate::AgentAddress;
-use crate::protocol::{MailMessage, DirectMessageProtocol};
-
+use crate::{
+    AgentAddress,
+    mail::entries::{PendingMail, ReceipientKind, Mail, OutMail},
+    protocol::{
+        MailMessage, DirectMessageProtocol,
+    },
+};
 
 pub enum SendSuccessKind {
     OK_DIRECT,

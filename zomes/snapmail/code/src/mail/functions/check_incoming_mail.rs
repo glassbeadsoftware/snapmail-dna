@@ -1,3 +1,21 @@
+use hdk::{
+    error::{ZomeApiResult, ZomeApiError},
+    holochain_persistence_api::{
+        cas::content::Address
+    },
+    holochain_core_types::{
+        entry::Entry,
+    },
+};
+use holochain_wasm_utils::{
+    holochain_core_types::link::LinkMatch,
+};
+use crate::{
+    AgentAddress,
+    mail::entries::{
+        OutMail, InMail,
+    },
+};
 
 /// Return list of new InMail addresses
 pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {

@@ -32,11 +32,11 @@ pub enum ReceipientKind {
 /// Mail can have Zero public receipient (but must have at least one public or private receipient)
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Mail {
-    date_sent: u64,
-    subject: String,
-    payload: String,
-    to: Vec<AgentAddress>,
-    cc: Vec<AgentAddress>,
+    pub date_sent: u64,
+    pub subject: String,
+    pub payload: String,
+    pub to: Vec<AgentAddress>,
+    pub cc: Vec<AgentAddress>,
 }
 
 impl Mail {
