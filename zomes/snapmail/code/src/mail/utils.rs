@@ -1,3 +1,5 @@
+use hdk::prelude::*;
+
 use hdk::{
     error::{ZomeApiError, ZomeApiResult},
     entry_definition::ValidatingEntryType,
@@ -36,8 +38,7 @@ pub(crate) fn get_entry_and_author(address: &Address) -> ZomeApiResult<(AgentAdd
     };
     let maybe_entry_result = hdk::get_entry_result(pending_address, get_options);
     if let Err(err) = maybe_entry_result {
-        hdk::debug("Failed getting address:");
-        hdk::debug(&err);
+        hdk::debug(format!("Failed getting address: {}", err));
         return Err(err);
     }
     let entry_result = maybe_entry_result.unwrap();
@@ -47,21 +48,21 @@ pub(crate) fn get_entry_and_author(address: &Address) -> ZomeApiResult<(AgentAdd
         },
         _ => panic!("Asked for latest so should get Single"),
     };
-    assert!(entry_item.headers.size() > 0);
-    assert!(entry_item.headers[0].provenances()[0] > 0);
+    assert!(entry_item.headers.len() > 0);
+    assert!(entry_item.headers[0].provenances().len() > 0);
     let author = entry_item.headers[0].provenances()[0].source();
     Ok((author, pending))
 }
 
 pub(crate) fn get_pending_mail(pending_address: &Address) -> ZomeApiResult<(AgentAddress, PendingMail)> {
     let (author, entry) = get_entry_and_author(pending_address)?;
-    let pending = crate::into_typed::<PendingMail>(entry.unwrap()).expect("Should be PendingMail");
+    let pending = crate::into_typed::<PendingMail>(entry).expect("Should be PendingMail");
     Ok((author, pending))
 }
 
 pub(crate) fn get_pending_ack(ack_address: &Address) -> ZomeApiResult<(AgentAddress, PendingAck)> {
     let (author, entry) = get_entry_and_author(ack_address)?;
-    let ack = crate::into_typed::<PendingAck>(entry.unwrap()).expect("Should be AckReceiptEncrypted");
+    let ack = crate::into_typed::<PendingAck>(entry).expect("Should be AckReceiptEncrypted");
     Ok((author, ack))
 }
 
@@ -71,12 +72,13 @@ pub(crate) fn create_and_commit_inack(outmail_address: &Address, from: &AgentAdd
     let inack = InAck::new();
     let inack_entry = Entry::App("inack".into(), inack.into());
     let inack_address = hdk::commit_entry(&inack_entry)?;
+    let json_from = serde_json::to_string(from).expect("Should stringify");
     // Create link from OutMail
     let _ = hdk::link_entries(
         outmail_address,
         &inack_address,
         "receipt",
-        from.into(),
+        json_from.as_str().into(),
     )?;
     Ok(inack_address)
 }

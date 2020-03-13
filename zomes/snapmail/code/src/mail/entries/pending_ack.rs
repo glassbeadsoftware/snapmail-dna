@@ -47,8 +47,8 @@ pub fn ackreceipt_encrypted_def() -> ValidatingEntryType {
                     // FIXME
                     Ok(())
                 }
-            ),
-        ],
+            )
+        ]
     )
 }
 

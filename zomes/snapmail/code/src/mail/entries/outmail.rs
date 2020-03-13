@@ -66,8 +66,8 @@ pub fn outmail_def() -> ValidatingEntryType {
                     // FIXME: Check PendingMail is authored by same agant
                     Ok(())
                 }
-            ),
-        ],
+            )
+        ]
     )
 }
 
@@ -90,7 +90,7 @@ impl OutMail {
         cc: Vec<AgentAddress>,
         bcc: Vec<AgentAddress>,
     ) -> Self {
-        assert_ne!(0, to.size() + cc.size(), bcc.size());
+        assert_ne!(0, to.size() + cc.size() + bcc.size());
         // TODO: remove duplicate receipients
         let date_sent = crate::snapmail_now();
         let mail = Mail { date_sent, subject, payload, to, cc };

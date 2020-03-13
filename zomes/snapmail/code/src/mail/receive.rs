@@ -1,3 +1,5 @@
+use hdk::prelude::*;
+
 use hdk::{
     error::{ZomeApiError, ZomeApiResult},
     holochain_core_types::entry::Entry,
@@ -9,10 +11,7 @@ use hdk::{
 use crate::{
     mail::{
         self,
-        entries::{
-            ack::AckReceiptEncrypted,
-            InMail, InAck,
-        }
+        entries::{ack::AckReceiptEncrypted, InMail, InAck, }
     },
     AgentAddress, DirectMessageProtocol, MailMessage, AckMessage,
     ReceivedMail, ReceivedAck,
@@ -36,7 +35,7 @@ pub fn receive_direct_mail(from: AgentAddress, mail_msg: MailMessage) -> DirectM
         from: from.clone(),
         mail: mail_msg.mail.clone(),
     };
-    let signal_json = serde_json::to_string(signal).expect("Should stringify");
+    let signal_json = serde_json::to_string(&signal).expect("Should stringify");
     hdk::emit_signal("received_mail", JsonString::from_json(&signal_json));
     // Return Success response
     return DirectMessageProtocol::Success(String::new());
@@ -58,7 +57,7 @@ pub fn receive_direct_ack(from: AgentAddress, ack_msg: AckMessage) -> DirectMess
         from: from.clone(),
         for_mail: ack_msg.outmail_address.clone(),
     };
-    let signal_json = serde_json::to_string(signal).expect("Should stringify");
+    let signal_json = serde_json::to_string(&signal).expect("Should stringify");
     hdk::emit_signal("received_ack", JsonString::from_json(&signal_json));
     // Return Success response
     return DirectMessageProtocol::Success(String::new());

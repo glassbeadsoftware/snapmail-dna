@@ -1,3 +1,5 @@
+use hdk::prelude::*;
+
 use hdk::{
     error::{ZomeApiResult, ZomeApiError},
     entry_definition::ValidatingEntryType,

@@ -46,8 +46,8 @@ pub fn pending_mail_def() -> ValidatingEntryType {
                     // FIXME
                     Ok(())
                 }
-            ),
-        ],
+            )
+        ]
     )
 }
 

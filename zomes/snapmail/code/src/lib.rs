@@ -135,7 +135,7 @@ mod snapmail {
     #[zome_fn("hc_public")]
     fn get_handle() -> String {
         let maybe_current_handle_entry = handle::get_handle();
-        if let Some(current_handle_entry) = maybe_current_handle {
+        if let Some((_, current_handle_entry)) = maybe_current_handle {
             let current_handle = into_typed::<Handle>(current_handle_entry)
                 .expect("Should be a Handle entry");
             return current_handle.name;
@@ -188,23 +188,23 @@ mod snapmail {
         mail::check_incoming_ack()
     }
 
-    /// Create & share an Acknowledgmeent for a mail we received.
-    /// Return Address of OutAck.
-    #[zome_fn("hc_public")]
-    pub fn acknowledge_mail(inmail_address: &Address) -> ZomeApiResult<Address> {
-        mail::acknowledge_mail(inmail_address)
-    }
+//    /// Create & share an Acknowledgmeent for a mail we received.
+//    /// Return Address of OutAck.
+//    #[zome_fn("hc_public")]
+//    fn acknowledge_mail(inmail_address: &Address) -> ZomeApiResult<Address> {
+//        mail::acknowledge_mail(inmail_address)
+//    }
 
-    /// Check if agent received AckReceipts from all receipients of one of this agent's OutMail.
-    /// If false, returns list of agents who's receipt is missing.
-    #[zome_fn("hc_public")]
-    pub fn has_mail_been_received(outmail_address: &Address) -> ZomeApiResult<Result<(), Vec<AgentAddress>>> {
-        mail::has_mail_been_received(outmail_address)
-    }
+//    /// Check if agent received AckReceipts from all receipients of one of this agent's OutMail.
+//    /// If false, returns list of agents who's receipt is missing.
+//    #[zome_fn("hc_public")]
+//    fn has_mail_been_received(outmail_address: &Address) -> ZomeApiResult<Result<(), Vec<AgentAddress>>> {
+//        mail::has_mail_been_received(outmail_address)
+//    }
 
-    /// Check if an InMail's source has received an Acknowledgement from this agent.
-    #[zome_fn("hc_public")]
-    pub fn has_ack_been_received(inmail_address: &Address) -> ZomeApiResult<bool> {
-        mail::has_ack_been_received(inmail_address)
-    }
+//    /// Check if an InMail's source has received an Acknowledgement from this agent.
+//    #[zome_fn("hc_public")]
+//    fn has_ack_been_received(inmail_address: &Address) -> ZomeApiResult<bool> {
+//        mail::has_ack_been_received(inmail_address)
+//    }
 }

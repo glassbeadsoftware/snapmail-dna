@@ -3,6 +3,8 @@ use super::{
     Mail, PendingMail,
 };
 
+use hdk::prelude::*;
+
 use hdk::{
     entry_definition::ValidatingEntryType,
     holochain_persistence_api::{
@@ -50,8 +52,8 @@ pub fn inmail_def() -> ValidatingEntryType {
                         // FIXME
                         Ok(())
                     }
-                ),
-            ],
+                )
+            ]
         )
 }
 

@@ -30,8 +30,8 @@ pub fn outack_def() -> ValidatingEntryType {
                     // FIXME
                     Ok(())
                 }
-            ),
-        ],
+            )
+        ]
     )
 }
 
