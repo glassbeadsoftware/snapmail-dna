@@ -24,6 +24,5 @@ pub struct MailMessage {
 
 #[derive(Clone, Deserialize)]
 pub struct AckMessage {
-    outmail_address: Address,
-    ack_address: Address,
+    pub outmail_address: Address,
 }

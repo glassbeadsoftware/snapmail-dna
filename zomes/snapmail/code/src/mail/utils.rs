@@ -27,7 +27,7 @@ use crate::{
 };
 
 /// Conditions: Must be a single author entry type
-fn get_entry_and_author(address: &Address) -> ZomeApiResult<(AgentAddress, Entry)> {
+pub(crate) fn get_entry_and_author(address: &Address) -> ZomeApiResult<(AgentAddress, Entry)> {
     let get_options = GetEntryOptions {
         status_request: StatusRequestKind::Latest,
         entry: true,
@@ -53,14 +53,30 @@ fn get_entry_and_author(address: &Address) -> ZomeApiResult<(AgentAddress, Entry
     Ok((author, pending))
 }
 
-fn get_pending_mail(pending_address: &Address) -> ZomeApiResult<(AgentAddress, PendingMail)> {
+pub(crate) fn get_pending_mail(pending_address: &Address) -> ZomeApiResult<(AgentAddress, PendingMail)> {
     let (author, entry) = get_entry_and_author(pending_address)?;
     let pending = crate::into_typed::<PendingMail>(entry.unwrap()).expect("Should be PendingMail");
     Ok((author, pending))
 }
 
-fn get_ack_encrypted(ack_address: &Address) -> ZomeApiResult<(AgentAddress, AckReceiptEncrypted)> {
+pub(crate) fn get_pending_ack(ack_address: &Address) -> ZomeApiResult<(AgentAddress, PendingAck)> {
     let (author, entry) = get_entry_and_author(ack_address)?;
-    let ack = crate::into_typed::<AckReceiptEncrypted>(entry.unwrap()).expect("Should be AckReceiptEncrypted");
+    let ack = crate::into_typed::<PendingAck>(entry.unwrap()).expect("Should be AckReceiptEncrypted");
     Ok((author, ack))
+}
+
+/// Return address of created InAck
+pub(crate) fn create_and_commit_inack(outmail_address: &Address, from: &AgentAddress) -> ZomeApiResult<Address> {
+    // Create InAck
+    let inack = InAck::new();
+    let inack_entry = Entry::App("inack".into(), inack.into());
+    let inack_address = hdk::commit_entry(&inack_entry)?;
+    // Create link from OutMail
+    let _ = hdk::link_entries(
+        outmail_address,
+        &inack_address,
+        "receipt",
+        from.into(),
+    )?;
+    Ok(inack_address)
 }

@@ -75,15 +75,16 @@ mod snapmail {
         if let Err(err) = maybe_msg {
             return format!("error: {}", err);
         }
-        match maybe_msg.unwrap() {
+        let message = match maybe_msg.unwrap() {
             DirectMessageProtocol::MailMessage(mail) => {
-                return mail::receive_direct_mail(from, mail);
+                mail::receive_direct_mail(from, mail)
             },
             DirectMessageProtocol::AckMessage(ack) => {
-                return mail::receive_direct_ack(from, ack);
+                mail::receive_direct_ack(from, ack)
             }
         };
-        return format!("error: unhandled message type")
+        let msg_json = serde_json::to_string(message).expect("Should stringify");
+        msg_json
     }
 
     // -- Entry definitions -- //
@@ -109,13 +110,18 @@ mod snapmail {
     }
 
     #[entry_def]
-    fn ackreceipt_encrypted_def() -> ValidatingEntryType {
-        mail::ackreceipt_encrypted_def()
+    fn pending_ack_def() -> ValidatingEntryType {
+        mail::pending_ack_def()
     }
 
     #[entry_def]
-    fn ackreceipt_private_def() -> ValidatingEntryType {
-        mail::ackreceipt_private_def()
+    fn outack_def() -> ValidatingEntryType {
+        mail::outack_def()
+    }
+
+    #[entry_def]
+    fn inack_def() -> ValidatingEntryType {
+        mail::inack_def()
     }
 
     // -- Zome Functions -- //
@@ -166,23 +172,24 @@ mod snapmail {
         mail::get_all_arrived_mail()
     }
 
-    /// Check PendingMails sent to this agent. Converts each into an InMail.
-    /// Return list of created InMail entries
+    /// Check PendingMails sent to this agent.
+    /// Converts each into an InMail.
+    /// Return list of created InMail entries.
     #[zome_fn("hc_public")]
     fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
         mail::check_incoming_mail()
     }
 
-    /// Check all AckReceiptEncrypted sent to this agent.
-    /// Adds them as links to our OutMails.
-    /// Return list of all newly received AckReceiptEncrypted
+    /// Check for PendingAcks sent to this agent.
+    /// Converts each into an InAck.
+    /// Return list of outMail addresses for which we succesfully linked a new InAck
     #[zome_fn("hc_public")]
     fn check_incoming_ack() -> ZomeApiResult<Vec<Address>> {
         mail::check_incoming_ack()
     }
 
-    /// Create & share an AckReceipt for a mail we received.
-    /// Return Address of AckReceipt.
+    /// Create & share an Acknowledgmeent for a mail we received.
+    /// Return Address of OutAck.
     #[zome_fn("hc_public")]
     pub fn acknowledge_mail(inmail_address: &Address) -> ZomeApiResult<Address> {
         mail::acknowledge_mail(inmail_address)
@@ -191,7 +198,13 @@ mod snapmail {
     /// Check if agent received AckReceipts from all receipients of one of this agent's OutMail.
     /// If false, returns list of agents who's receipt is missing.
     #[zome_fn("hc_public")]
-    pub fn has_been_received(outmail_address: &Address) -> ZomeApiResult<Result<(), Vec<AgentAddress>>> {
-        mail::has_been_received(outmail_address)
+    pub fn has_mail_been_received(outmail_address: &Address) -> ZomeApiResult<Result<(), Vec<AgentAddress>>> {
+        mail::has_mail_been_received(outmail_address)
+    }
+
+    /// Check if an InMail's source has received an Acknowledgement from this agent.
+    #[zome_fn("hc_public")]
+    pub fn has_ack_been_received(inmail_address: &Address) -> ZomeApiResult<bool> {
+        mail::has_ack_been_received(inmail_address)
     }
 }

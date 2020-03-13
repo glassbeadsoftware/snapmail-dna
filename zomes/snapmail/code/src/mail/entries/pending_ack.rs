@@ -20,8 +20,8 @@ use crate::{
 
 /// Entry representing an AcknowldegmentReceipt on the DHT waiting to be received
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
-pub struct AckReceiptEncrypted {
-    outmail_address: Address,
+pub struct PendingAck {
+    pub outmail_address: Address,
 }
 
 pub fn ackreceipt_encrypted_def() -> ValidatingEntryType {
@@ -32,7 +32,7 @@ pub fn ackreceipt_encrypted_def() -> ValidatingEntryType {
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: | _validation_data: hdk::EntryValidationData<AckReceiptEncrypted>| {
+        validation: | _validation_data: hdk::EntryValidationData<PendingAck>| {
             // FIXME
             Ok(())
         },
@@ -52,7 +52,7 @@ pub fn ackreceipt_encrypted_def() -> ValidatingEntryType {
     )
 }
 
-impl AckReceiptEncrypted {
+impl PendingAck {
     pub fn new(outmail_address: Address) -> Self {
         Self {
             outmail_address,

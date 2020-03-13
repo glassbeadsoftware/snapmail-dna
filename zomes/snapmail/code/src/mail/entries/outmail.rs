@@ -45,25 +45,12 @@ pub fn outmail_def() -> ValidatingEntryType {
         },
         links: [
             to!(
-                "ackreceipt_encrypted",
-                link_type: "receipt_encrypted",
+                "inack",
+                link_type: "receipt",
                 validation_package: || {
                     hdk::ValidationPackageDefinition::Entry
                 },
                 validation: | _validation_data: hdk::LinkValidationData| {
-                    // FIXME: Check AckReceipt author is one of the OutMail's recepient
-                    // FIXME: Check if AckReceipt for this author already received?
-                    Ok(())
-                }
-            ),
-            to!(
-                "ackreceipt_private",
-                link_type: "receipt_private",
-                validation_package: || {
-                    hdk::ValidationPackageDefinition::Entry
-                },
-                validation: | _validation_data: hdk::LinkValidationData| {
-                    // FIXME: Check AckReceipt author is one of the OutMail's recepient
                     // FIXME: Check if AckReceipt for this author already received?
                     Ok(())
                 }

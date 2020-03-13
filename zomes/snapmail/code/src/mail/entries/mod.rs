@@ -1,10 +1,14 @@
-pub mod inmail;
-pub mod outmail;
-pub mod pending_mail;
-pub mod ackreceipt_encrypted;
-pub mod ackreceipt_private;
+mod inmail;
+mod outmail;
+mod pending_mail;
+mod pending_ack;
+mod outack;
+mod inack;
 
-pub use self::{inmail::*, pending_mail::*, outmail::*, send::*, ackreceipt_encrypted::*};
+pub use self::{
+    inmail::*, pending_mail::*, outmail::*, send::*,
+    pending_ack::*, inack::*, outack::*,
+};
 
 use crate::AgentAddress;
 

@@ -1,3 +1,9 @@
+use hdk::holochain_persistence_api::{
+    cas::content::Address
+};
+use crate::mail::entries::{
+    InMail, OutMail,
+};
 
 /// Get InMail our OutMail struct in local source chain at address
 pub fn get_mail(address: Address) -> Option<Result<InMail, OutMail>> {

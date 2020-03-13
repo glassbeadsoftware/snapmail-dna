@@ -87,8 +87,8 @@ fn send_mail_to(outmail_address: &Address, mail: &Mail, destination: &AgentAddre
 }
 
 /// Zone Function
-/// Send Mail: Creates OutMail, tries to send directly to each receipient
-/// if not online creates a PendingMail
+/// Send Mail: Creates OutMail, tries to send directly to each receipient.
+/// if receipient not online, creates a PendingMail on the DHT.
 pub fn send_mail(
     subject: String,
     payload: String,
