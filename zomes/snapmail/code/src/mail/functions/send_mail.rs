@@ -48,9 +48,9 @@ impl SendTotalResult {
 
     pub fn add_pending(mut self, kind: ReceipientKind, agentId: &AgentAddress, address: Address) {
         match kind {
-            TO => self.to_pendings.insert(agentId.clone(), address),
-            CC => self.cc_pendings.insert(agentId.clone(), address),
-            BCC => self.bcc_pendings.insert(agentId.clone(), address),
+            ReceipientKind::TO => self.to_pendings.insert(agentId.clone(), address),
+            ReceipientKind::CC => self.cc_pendings.insert(agentId.clone(), address),
+            ReceipientKind::BCC => self.bcc_pendings.insert(agentId.clone(), address),
         };
     }
 }

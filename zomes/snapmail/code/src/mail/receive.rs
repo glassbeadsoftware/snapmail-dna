@@ -3,6 +3,9 @@
 use hdk::{
     holochain_core_types::entry::Entry,
     holochain_json_api::json::JsonString,
+    holochain_persistence_api::{
+        cas::content::Address
+    },
 };
 use crate::{
     mail::{
@@ -12,6 +15,30 @@ use crate::{
     AgentAddress, DirectMessageProtocol, MailMessage, AckMessage,
     ReceivedMail, ReceivedAck,
 };
+use std::convert::TryInto;
+
+pub fn receive(from: Address, msg_json: JsonString) -> String {
+    hdk::debug(format!("Received from: {:?}", from)).ok();
+    let maybe_msg: Result<DirectMessageProtocol, _> = msg_json.try_into();
+    if let Err(err) = maybe_msg {
+        return format!("error: {}", err);
+    }
+    let message = match maybe_msg.unwrap() {
+        DirectMessageProtocol::Mail(mail) => {
+            mail::receive_direct_mail(from, mail)
+        },
+        DirectMessageProtocol::Ack(ack) => {
+            mail::receive_direct_ack(from, ack)
+        }
+        _ => {
+            let response = DirectMessageProtocol::Failure("Unexpected protocol".to_owned());
+            return serde_json::to_string(&response).expect("Should stringify");
+        },
+    };
+    let msg_json = serde_json::to_string(&message).expect("Should stringify");
+     msg_json
+}
+
 
 /// Handle a MailMessage.
 /// Emits `received_mail` signal.

@@ -43,6 +43,9 @@ mod snapmail {
 
     // -- System -- //
 
+    use crate::DirectMessageProtocol;
+
+
     #[init]
     fn init() {
         // TODO: create initial username? (random?)
@@ -56,22 +59,8 @@ mod snapmail {
 
     /// Receive point for one of the Protocol messages
     #[receive]
-    pub fn receive(from: Address, msg_json: JsonString) -> String {
-        hdk::debug(format!("Received from: {:?}", from)).ok();
-        let maybe_msg: Result<DirectMessageProtocol, _> = serde_json::from_str(&msg_json);
-        if let Err(err) = maybe_msg {
-            return format!("error: {}", err);
-        }
-        let message = match maybe_msg.unwrap() {
-            DirectMessageProtocol::Mail(mail) => {
-                mail::receive_direct_mail(from, mail)
-            },
-            DirectMessageProtocol::Ack(ack) => {
-                mail::receive_direct_ack(from, ack)
-            }
-        };
-        let msg_json = serde_json::to_string(&message).expect("Should stringify");
-        msg_json
+    pub fn receive(from: Address, msg_json: String) -> String {
+        mail::receive(from, JsonString::from_json(&msg_json))
     }
 
     // -- Entry definitions -- //
