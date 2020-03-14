@@ -120,15 +120,7 @@ mod snapmail {
 
     /// Get this agent's latest handle
     #[zome_fn("hc_public")]
-    fn get_handle() -> String {
-        let maybe_current_handle_entry = handle::get_handle();
-        if let Some((_, current_handle_entry)) = maybe_current_handle_entry {
-            let current_handle = into_typed::<handle::Handle>(current_handle_entry)
-                .expect("Should be a Handle entry");
-            return current_handle.name;
-        }
-        return "<noname>".to_string();
-    }
+    fn get_toto_handle() -> ZomeApiResult<String> { handle::get_handle() }
 
     /// Send mail to all receipients
     /// Returns Map of PendingMail entry per receipient

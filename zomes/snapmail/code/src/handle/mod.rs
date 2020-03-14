@@ -68,8 +68,20 @@ impl Handle {
 }
 
 /// Zome Function
+/// /// get latest handle for this agent
+pub fn get_handle() -> ZomeApiResult<String> {
+    let maybe_current_handle_entry = get_handle_internal();
+    if let Some((_, current_handle_entry)) = maybe_current_handle_entry {
+        let current_handle = into_typed::<Handle>(current_handle_entry)
+            .expect("Should be a Handle entry");
+        return Ok(current_handle.name);
+    }
+    return Ok("<noname>".to_string());
+}
+
+
 /// get latest handle for this agent
-pub fn get_handle() -> Option<(Address, Entry)> {
+fn get_handle_internal() -> Option<(Address, Entry)> {
     let link_results = hdk::get_links(
         &*hdk::AGENT_ADDRESS,
         LinkMatch::Exactly("handle"),
@@ -92,7 +104,7 @@ pub fn get_handle() -> Option<(Address, Entry)> {
 pub fn set_handle(name: String) -> ZomeApiResult<Address> {
     let new_handle = Handle::new(name);
     let app_entry = Entry::App("handle".into(), new_handle.into());
-    let maybe_current_handle_entry = get_handle();
+    let maybe_current_handle_entry = get_handle_internal();
     if let Some((entry_address, current_handle_entry)) = maybe_current_handle_entry {
         // If handle already set to this value, just return current entry address
         let current_handle = into_typed::<Handle>(current_handle_entry)
