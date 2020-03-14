@@ -36,7 +36,7 @@ const conductorConfig = Config.gen({myInstanceName: dna})
 
 orchestrator.registerScenario("entry creation test", async (s, t) => {
 
-  const {alice, bob} = await s.players({alice: conductorConfig, bob: conductorConfig}, true)
+  const {alex, billy} = await s.players({alex: conductorConfig, billy: conductorConfig}, true)
 
   // Make a call to a Zome function
   // indicating the function, and passing it an input
@@ -53,24 +53,25 @@ orchestrator.registerScenario("entry creation test", async (s, t) => {
     }
   }
 
-  const addr = await alice.call("myInstanceName", "snapmail", "create_outmail", test_outmail)
+  const name = "alex"
+  const params = { name }
+  const addr = await alex.call("myInstanceName", "snapmail", "set_handle", params)
   console.log('addr: ' + JSON.stringify(addr))
   // Wait for all network activity to settle
   await s.consistency()
 
-  const result = await alice.call("myInstanceName", "snapmail", "get_outmail", {
-    address: addr.Ok
-  })
+  const result = await alex.call("myInstanceName", "snapmail", "get_handle", {})
   // debug logs
-  console.log('result      : ' + JSON.stringify(result.Ok.App))
-  const result_obj = JSON.parse(result.Ok.App[1])
-  console.log('result_obj  : ' + JSON.stringify(result_obj))
-  console.log('test_outmail: ' + JSON.stringify(test_outmail.outmail))
+  console.log('result      : ' + result.Ok)
+  // console.log('result      : ' + JSON.stringify(result.Ok.App))
+  // const result_obj = JSON.parse(result.Ok.App[1])
+  // console.log('result_obj  : ' + JSON.stringify(result_obj))
+  // console.log('test_outmail: ' + JSON.stringify(alex_handle.name))
 
-   // const result = await bob.call("myInstanceName", "snapmail", "get_outmail", {"address": addr.Ok})
+   // const result = await billy.call("myInstanceName", "snapmail", "get_outmail", {"address": addr.Ok})
 
   // check for equality of the actual and expected results
-  t.deepEqual(result_obj, test_outmail.outmail)
+  t.deepEqual(result.Ok, name)
 })
 
 orchestrator.run()

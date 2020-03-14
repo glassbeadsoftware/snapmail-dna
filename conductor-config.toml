@@ -11,8 +11,8 @@ public_address = 'HcScIc8G7X769Nr6cnRxgR73wi8au946z7hc46EMDJjaz8au4bD7V6hj7T6B8f
 test_agent = true
 
 [[dnas]]
-file = './dist/snapmail.dna.json'
-hash = 'QmSbJBxBtrCSPDzdHdhxvCBDrrdd3GmZgs5joaizrgg9pB'
+file = './dist/snapmail-dna.dna.json'
+hash = 'QmSxwnZVh1xLTkcoeDgyymy6kptoV5mzm2URLia59fDJNL'
 id = 'hc-run-dna'
 
 [[instances]]

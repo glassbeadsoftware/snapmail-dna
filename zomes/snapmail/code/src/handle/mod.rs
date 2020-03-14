@@ -90,6 +90,7 @@ fn get_handle_internal() -> Option<(Address, Entry)> {
     let links_result = link_results.links();
     assert!(links_result.len() <= 1);
     if links_result.len() == 0 {
+        hdk::debug("No handle found for agent").ok();
         return None;
     }
     let entry_address = &links_result[0].address;
@@ -116,6 +117,7 @@ pub fn set_handle(name: String) -> ZomeApiResult<Address> {
         hdk::update_entry(app_entry.clone(), &entry_address)?;
     }
     // First Handle ever, commit entry
+    hdk::debug("First Handle for this agent!!!").ok();
     let entry_address = hdk::commit_entry(&app_entry)?;
     let _ = hdk::link_entries(&*hdk::AGENT_ADDRESS, &entry_address, "handle", "")?;
     return Ok(entry_address);
