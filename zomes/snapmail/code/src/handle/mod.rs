@@ -12,7 +12,10 @@ use hdk::{
     },
 };
 
-use crate::utils::into_typed;
+use crate::{
+    AgentAddress,
+    utils::into_typed,
+};
 
 /// Entry representing the username of an Agent
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
@@ -69,8 +72,8 @@ impl Handle {
 
 /// Zome Function
 /// /// get latest handle for this agent
-pub fn get_handle() -> ZomeApiResult<String> {
-    let maybe_current_handle_entry = get_handle_internal();
+pub fn get_handle(agentId: AgentAddress) -> ZomeApiResult<String> {
+    let maybe_current_handle_entry = get_handle_internal(&agentId);
     if let Some((_, current_handle_entry)) = maybe_current_handle_entry {
         let current_handle = into_typed::<Handle>(current_handle_entry)
             .expect("Should be a Handle entry");
@@ -79,11 +82,17 @@ pub fn get_handle() -> ZomeApiResult<String> {
     return Ok("<noname>".to_string());
 }
 
+/// Zome Function
+/// /// get latest handle for this agent
+pub fn get_my_handle() -> ZomeApiResult<String> {
+    get_handle(hdk::AGENT_ADDRESS.clone())
+}
+
 
 /// get latest handle for this agent
-fn get_handle_internal() -> Option<(Address, Entry)> {
+fn get_handle_internal(agentId: &AgentAddress) -> Option<(Address, Entry)> {
     let link_results = hdk::get_links(
-        &*hdk::AGENT_ADDRESS,
+        agentId,
         LinkMatch::Exactly("handle"),
         LinkMatch::Any,
     ).expect("No reason for this to fail");
@@ -105,7 +114,7 @@ fn get_handle_internal() -> Option<(Address, Entry)> {
 pub fn set_handle(name: String) -> ZomeApiResult<Address> {
     let new_handle = Handle::new(name.clone());
     let app_entry = Entry::App("handle".into(), new_handle.into());
-    let maybe_current_handle_entry = get_handle_internal();
+    let maybe_current_handle_entry = get_handle_internal(&*hdk::AGENT_ADDRESS);
     if let Some((entry_address, current_handle_entry)) = maybe_current_handle_entry {
         // If handle already set to this value, just return current entry address
         let current_handle = into_typed::<Handle>(current_handle_entry)

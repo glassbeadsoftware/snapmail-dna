@@ -111,8 +111,13 @@ mod snapmail {
 
     /// Get this agent's latest handle
     #[zome_fn("hc_public")]
-    fn get_handle() -> ZomeApiResult<String> { handle::get_handle() }
+    fn get_my_handle() -> ZomeApiResult<String> { handle::get_my_handle() }
 
+    /// Get some agent's latest handle
+    #[zome_fn("hc_public")]
+    pub fn get_handle(agentId: String) -> ZomeApiResult<String> {
+        handle::get_handle(agentId.into())
+    }
     /// Send mail to all receipients
     /// Returns Map of PendingMail entry per receipient
     /// Conditions: Mail must have at least one receipient
