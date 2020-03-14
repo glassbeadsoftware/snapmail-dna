@@ -1,6 +1,7 @@
+// use hdk::prelude::*;
+
 use hdk::{
     error::{ZomeApiResult, ZomeApiError},
-    entry_definition::ValidatingEntryType,
     holochain_persistence_api::{
         cas::content::Address
     },
@@ -15,9 +16,8 @@ use crate::{
     AgentAddress,
     protocol::{DirectMessageProtocol, AckMessage},
     mail::{
-        utils::get_pending_ack,
         entries::{
-            OutMail, InMail, PendingAck, OutAck,
+            InMail, PendingAck, OutAck,
         }
     },
 };
@@ -28,7 +28,7 @@ pub fn acknowledge_mail(inmail_address: &Address) -> ZomeApiResult<Address> {
     //  1. Make sure its an InMail
     let inmail = hdk::utils::get_as_type::<InMail>(inmail_address.clone())?;
     //  2. Make sure it has not already been acknowledged
-    let res = hdk::get_links_count(inmail_address, "acknowledgment".into(), LinkMatch::Any)?;
+    let res = hdk::get_links_count(inmail_address, LinkMatch::Exactly("acknowledgment"), LinkMatch::Any)?;
     if res.count > 0 {
         return Err(ZomeApiError::Internal("Mail has already been acknowledged".to_string()));
     }
@@ -55,7 +55,7 @@ fn acknowledge_mail_direct(outmail_address: &Address, from: &AgentAddress) -> Zo
     let msg = AckMessage {
         outmail_address: outmail_address.clone(),
     };
-    let payload = serde_json::to_string(DirectMessageProtocol::Ack(msg)).unwrap();
+    let payload = serde_json::to_string(&DirectMessageProtocol::Ack(msg)).unwrap();
     //   b. Send DM
     let result = hdk::send(
         from.clone(),
@@ -68,9 +68,9 @@ fn acknowledge_mail_direct(outmail_address: &Address, from: &AgentAddress) -> Zo
     //   c. Check Response
     let response = result.unwrap();
     hdk::debug(format!("Received response: {:?}", response)).ok();
-    let maybe_msg: Result<DirectMessageProtocol, _> = msg_json.try_into();
-    if Err(err) = maybe_msg {
-        return Err(err);
+    let maybe_msg: Result<DirectMessageProtocol, _> = serde_json::from_str(&response);
+    if let Err(err) = maybe_msg {
+        return Err(ZomeApiError::Internal(format!("{}", err)));
     }
     match maybe_msg.unwrap() {
         DirectMessageProtocol::Success(_) => Ok(()),
@@ -78,14 +78,14 @@ fn acknowledge_mail_direct(outmail_address: &Address, from: &AgentAddress) -> Zo
     }
 }
 
-/// Create & Commit AckReceiptEncrypted
-/// Return address of newly created AckReceiptEncrypted
+/// Create & Commit PendingAck
+/// Return address of newly created PendingAck
 /// Return PendingAck's address
 fn acknowledge_mail_pending(outack_address: &Address, outmail_address: &Address, from: &AgentAddress) -> ZomeApiResult<Address> {
     let pending_ack = PendingAck::new(outmail_address.clone());
     let pending_ack_entry = Entry::App("pending_ack".into(), pending_ack.into());
     let pending_ack_address = hdk::commit_entry(&pending_ack_entry)?;
     let _ = hdk::link_entries(&outack_address, &pending_ack_address, "pending", "")?;
-    let _ = hdk::link_entries(&from, &pending_ack_address, "ack_inbox", &HDK::AGENT_ADDRESS)?;
+    let _ = hdk::link_entries(&from, &pending_ack_address, "ack_inbox", &*hdk::AGENT_ADDRESS.to_string())?;
     Ok(pending_ack_address)
 }

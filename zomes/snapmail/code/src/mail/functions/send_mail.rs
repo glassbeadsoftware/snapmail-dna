@@ -1,16 +1,18 @@
+use hdk::prelude::*;
+
 use hdk::{
-    error::{ZomeApiResult, ZomeApiError},
+    error::ZomeApiResult,
     holochain_persistence_api::{
         cas::content::Address
     },
     holochain_core_types::{
         entry::Entry,
-        dna::entry_types::Sharing,
-    }
+        time::Timeout,
+    },
 };
 
 use std::collections::HashMap;
-use holochain_wasm_utils::holochain_persistence_api::hash::HashString;
+
 use crate::{
     AgentAddress,
     mail::entries::{PendingMail, ReceipientKind, Mail, OutMail},
@@ -19,6 +21,7 @@ use crate::{
     },
 };
 
+#[allow(non_camel_case_types)]
 pub enum SendSuccessKind {
     OK_DIRECT,
     OK_PENDING(Address),
@@ -43,7 +46,7 @@ impl SendTotalResult {
         }
     }
 
-    pub fn add_pending(mut self, kind: super::ReceipientKind, agentId: &AgentAddress, address: Address) {
+    pub fn add_pending(mut self, kind: ReceipientKind, agentId: &AgentAddress, address: Address) {
         match kind {
             TO => self.to_pendings.insert(agentId.clone(), address),
             CC => self.cc_pendings.insert(agentId.clone(), address),
@@ -58,32 +61,32 @@ fn send_mail_to(outmail_address: &Address, mail: &Mail, destination: &AgentAddre
     //   a. Create DM
     let msg = MailMessage {
         outmail_address: outmail_address.clone(),
-        mail: Mail.clone(),
+        mail: mail.clone(),
     };
-    let payload = serde_json::to_string(DirectMessageProtocol::Mail(msg)).unwrap();
+    let payload = serde_json::to_string(&DirectMessageProtocol::Mail(msg)).unwrap();
     //   b. Send DM
     let result = hdk::send(
         destination.clone(),
         payload,
-        crate::DIRECT_SEND_TIMEOUT_MS.into(),
+        Timeout::new(crate::DIRECT_SEND_TIMEOUT_MS),
     );
     //   c. Check Response
     if let Ok(response) = result {
         hdk::debug(format!("Received response: {:?}", response)).ok();
-        let maybe_msg: Result<DirectMessageProtocol, _> = msg_json.try_into();
+        let maybe_msg: Result<DirectMessageProtocol, _> = serde_json::from_str(&response);
         if let Ok(msg) = maybe_msg {
             if let DirectMessageProtocol::Success(_) = msg {
-                return Ok(SendResult::OK_DIRECT);
+                return Ok(SendSuccessKind::OK_DIRECT);
             }
         }
     };
     // 2. Direct Send failed, so send to DHT instead by creating a PendingMail
     let pending = PendingMail::new(mail.clone(), outmail_address.clone());
-    let pending_entry = Entry::App("pending_mail".into(), outmail.into());
+    let pending_entry = Entry::App("pending_mail".into(), pending.into());
     let pending_address = hdk::commit_entry(&pending_entry)?;
-    let _ = hdk::link_entries(&outmail_address, &pending_address, "pending", pending_address.into())?;
-    let _ = hdk::link_entries(&destination, &pending_address, "mail_inbox", &HDK::AGENT_ADDRESS)?;
-    Ok(SendResult::OK_PENDING(pending_address))
+    let _ = hdk::link_entries(&outmail_address, &pending_address, "pending", &pending_address.to_string())?;
+    let _ = hdk::link_entries(&destination, &pending_address, "mail_inbox", &*hdk::AGENT_ADDRESS.to_string())?;
+    Ok(SendSuccessKind::OK_PENDING(pending_address))
 }
 
 /// Zone Function
@@ -103,7 +106,7 @@ pub fn send_mail(
     let mut total_result = SendTotalResult::new(outmail_address.clone());
 
     // to
-    for agent in to_remaining {
+    for agent in to {
         let res = send_mail_to(&outmail_address, &outmail.mail, &agent);
         if let Ok(SendSuccessKind::OK_PENDING(pending_address)) = res {
             total_result.add_pending(ReceipientKind::TO, &agent, pending_address);

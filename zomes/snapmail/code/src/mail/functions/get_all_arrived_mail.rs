@@ -1,5 +1,7 @@
+//use hdk::prelude::*;
+
 use hdk::{
-    error::{ZomeApiResult, ZomeApiError},
+    error::ZomeApiResult,
     holochain_persistence_api::{
         cas::content::Address
     },
@@ -18,7 +20,7 @@ pub fn get_all_arrived_mail() -> ZomeApiResult<Vec<Address>> {
     let mut unreads = Vec::new();
     for inmail_address in &result {
         //   2. Get Acknowledgment private link
-        let res_count = hdk::get_links_count(inmail_address, "acknowledgment".into(), LinkMatch::Any)?;
+        let res = hdk::get_links_count(inmail_address, LinkMatch::Exactly("acknowledgment"), LinkMatch::Any)?;
         //      b. if true continue
         if res.count > 0 {
             continue;

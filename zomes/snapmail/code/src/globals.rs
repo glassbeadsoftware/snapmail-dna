@@ -1,2 +1,2 @@
 
-pub const DIRECT_SEND_TIMEOUT_MS: u32 = 1000;
+pub const DIRECT_SEND_TIMEOUT_MS: usize = 1000;

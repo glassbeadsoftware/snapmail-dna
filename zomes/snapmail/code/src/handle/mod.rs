@@ -1,16 +1,16 @@
 use hdk::prelude::*;
 
-//use hdk::{
-//    error::{ZomeApiError, ZomeApiResult},
-//    entry_definition::ValidatingEntryType,
-//    holochain_persistence_api::{
-//        cas::content::Address
-//    },
-//    holochain_core_types::{
-//        entry::Entry,
-//        link::LinkMatch,
-//    },
-//};
+use hdk::{
+    error::ZomeApiResult,
+    entry_definition::ValidatingEntryType,
+    holochain_persistence_api::{
+        cas::content::Address
+    },
+    holochain_core_types::{
+        entry::Entry,
+        link::LinkMatch,
+    },
+};
 
 use crate::utils::into_typed;
 
@@ -93,7 +93,7 @@ pub fn set_handle(name: String) -> ZomeApiResult<Address> {
     let new_handle = Handle::new(name);
     let app_entry = Entry::App("handle".into(), new_handle.into());
     let maybe_current_handle_entry = get_handle();
-    if let Some((entry_address, current_handle_entry)) = maybe_current_handle {
+    if let Some((entry_address, current_handle_entry)) = maybe_current_handle_entry {
         // If handle already set to this value, just return current entry address
         let current_handle = into_typed::<Handle>(current_handle_entry)
             .expect("Should be a Handle entry");
@@ -105,7 +105,7 @@ pub fn set_handle(name: String) -> ZomeApiResult<Address> {
     }
     // First Handle ever, commit entry
     let entry_address = hdk::commit_entry(&app_entry)?;
-    let _ = hdk::link_entries(&HDK::AGENT_ADDRESS, &ack_address, "handle", "")?;
+    let _ = hdk::link_entries(&*hdk::AGENT_ADDRESS, &entry_address, "handle", "")?;
     return Ok(entry_address);
 }
 

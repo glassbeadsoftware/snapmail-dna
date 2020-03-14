@@ -1,8 +1,3 @@
-use crate::{AgentAddress, MailMessage};
-use super::{
-    Mail, PendingMail,
-};
-
 use hdk::prelude::*;
 
 use hdk::{
@@ -10,11 +5,11 @@ use hdk::{
     holochain_persistence_api::{
         cas::content::Address
     },
-    holochain_core_types::{
-        entry::Entry,
-    },
 };
-use hdk::error::ZomeApiError;
+use crate::{
+    AgentAddress, MailMessage,
+    mail::entries::{Mail, PendingMail},
+};
 
 //-------------------------------------------------------------------------------------------------
 // Definition
@@ -82,6 +77,6 @@ impl InMail {
 //            return ZomeApiError();
 //        }
         let received_date = crate::snapmail_now();
-        Self::new(mail, from.clone(), received_date, pending.outmail_address)
+        Self::new(pending.mail, from.clone(), received_date, pending.outmail_address)
     }
 }

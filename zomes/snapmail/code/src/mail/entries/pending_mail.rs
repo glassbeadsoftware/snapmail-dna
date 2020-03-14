@@ -1,14 +1,13 @@
+use hdk::prelude::*;
+
 use hdk::{
     entry_definition::ValidatingEntryType,
     holochain_persistence_api::{
         cas::content::Address
     },
-    holochain_core_types::{
-        entry::Entry,
-    },
 };
 
-use super::Mail;
+use super::{Mail, OutMail};
 
 //-------------------------------------------------------------------------------------------------
 // Definition

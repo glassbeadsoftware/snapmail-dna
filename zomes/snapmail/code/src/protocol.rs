@@ -1,14 +1,9 @@
-use hdk::{
-    error::{ZomeApiError, ZomeApiResult},
-    entry_definition::ValidatingEntryType,
-    holochain_persistence_api::{
-        cas::content::Address
-    },
-};
+use hdk::prelude::*;
+use hdk::holochain_persistence_api::cas::content::Address;
 
-use crate::mail::Mail;
+use crate::mail::entries::Mail;
 
-#[derive(Clone, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub enum DirectMessageProtocol {
     Mail(MailMessage),
     Ack(AckMessage),
@@ -16,13 +11,13 @@ pub enum DirectMessageProtocol {
     Success(String),
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct MailMessage {
     pub outmail_address: Address,
     pub mail: Mail,
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct AckMessage {
     pub outmail_address: Address,
 }

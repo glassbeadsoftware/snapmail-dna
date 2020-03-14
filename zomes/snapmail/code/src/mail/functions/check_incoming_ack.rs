@@ -1,26 +1,21 @@
+//use hdk::prelude::*;
+
 use hdk::{
-    error::{ZomeApiError, ZomeApiResult},
+    error::{ZomeApiResult},
     holochain_persistence_api::{
         cas::content::Address
-    },
-    holochain_core_types::{
-        entry::Entry,
     },
 };
 use holochain_wasm_utils::{
     holochain_core_types::link::LinkMatch,
 };
-use crate::mail::{
-    self,
-    utils,
-    entries::{InAck},
-};
+use crate::mail;
 
 /// Return list of outMail addresses for which we succesfully linked a new InAck
 pub fn check_incoming_ack() -> ZomeApiResult<Vec<Address>> {
     // Lookup `ack_inbox` links on my agentId
     let links_result = hdk::get_links(
-        &HDK::AGENT_ADDRESS,
+        &*hdk::AGENT_ADDRESS,
         LinkMatch::Exactly("ack_inbox"),
         LinkMatch::Any)?;
     // For each link
@@ -35,15 +30,15 @@ pub fn check_incoming_ack() -> ZomeApiResult<Vec<Address>> {
         // Create InAck
         let maybe_inack_address = mail::create_and_commit_inack(&pending_ack.outmail_address, &author);
         if let Err(err) = maybe_inack_address {
-            hdk::debug(failure!("Creating InAck from PendignAck failed: {}", err));
+            hdk::debug(format!("Creating InAck from PendignAck failed: {}", err));
             continue;
         }
         //  - Delete link from my agentId
         let res = hdk::remove_link(
-            &AGENT_ADDRESS,
+            *hdk::AGENT_ADDRESS,
             &pending_ack_address,
             "ack_inbox",
-            LinkMatch::Any,
+            "",
         );
         if let Err(err) = res {
             hdk::debug("Remove ``ack_inbox`` link failed:");
@@ -53,7 +48,7 @@ pub fn check_incoming_ack() -> ZomeApiResult<Vec<Address>> {
         // Delete PendingAck
         let res = hdk::remove_entry(pending_ack_address);
         if let Err(err) = res {
-            hdk::debug(failure!("Delete PendignAck failed: {}", err));
+            hdk::debug(format!("Delete PendignAck failed: {}", err));
         }
         // Add to return list
         updated_outmails.push(pending_ack.outmail_address.clone());

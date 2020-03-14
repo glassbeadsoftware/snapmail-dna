@@ -5,8 +5,10 @@ mod pending_ack;
 mod outack;
 mod inack;
 
+use hdk::prelude::*;
+
 pub use self::{
-    inmail::*, pending_mail::*, outmail::*, send::*,
+    inmail::*, pending_mail::*, outmail::*,
     pending_ack::*, inack::*, outack::*,
 };
 
@@ -14,14 +16,16 @@ use crate::AgentAddress;
 
 pub enum OutMailState {
     CREATED,    // OutMail written
-    SENT,       // PendingMail created and/or Some AckReceipts have been received
-    RECEIVED,   // All AckReceipts havec been received, no more PendingMail
+    SENT,       // PendingMail created and/or Some receipts have been received
+    RECEIVED,   // All receipts have been received, no more PendingMail
 }
 
+#[allow(non_camel_case_types)]
 pub enum InMailState {
     INCOMING, // PendingMail for this agent
     ARRIVED, // InMail written
-    ACKNOWLEDGED, // AckReceipt written
+    ACKNOWLEDGED, // OutAck written
+    ACK_RECEIVED, // OutAck has been received, no PendingAck
 }
 
 

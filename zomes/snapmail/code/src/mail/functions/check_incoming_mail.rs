@@ -1,5 +1,7 @@
+// use hdk::prelude::*;
+
 use hdk::{
-    error::{ZomeApiResult, ZomeApiError},
+    error::ZomeApiResult,
     holochain_persistence_api::{
         cas::content::Address
     },
@@ -10,19 +12,13 @@ use hdk::{
 use holochain_wasm_utils::{
     holochain_core_types::link::LinkMatch,
 };
-use crate::{
-    AgentAddress,
-    mail::{
-        self,
-        entries::{OutMail, InMail, },
-    },
-};
+use crate::mail::{self, entries::InMail};
 
 /// Return list of new InMail addresses
 pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
     // Lookup `mail_inbox` links on my agentId
     let links_result = hdk::get_links(
-        &HDK::AGENT_ADDRESS,
+        &*hdk::AGENT_ADDRESS,
         LinkMatch::Exactly("mail_inbox"),
         LinkMatch::Any,
     )?;
@@ -40,16 +36,16 @@ pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
         let inmail_entry = Entry::App("inmail".into(), inmail.into());
         let maybe_inmail_address = hdk::commit_entry(&inmail_entry);
         if maybe_inmail_address.is_err() {
-            hdk::debug("Failed committing inMail");
+            hdk::debug("Failed committing InMail");
             continue;
         }
         new_inmails.push(maybe_inmail_address.unwrap());
         //  3. Remove link from this agentId
         let res = hdk::remove_link(
-            &AGENT_ADDRESS,
+            *hdk::AGENT_ADDRESS,
             &pending_address,
             "mail_inbox",
-            LinkMatch::Any,
+            "",
         );
         if let Err(err) = res {
             hdk::debug("Remove ``mail_inbox`` link failed:");

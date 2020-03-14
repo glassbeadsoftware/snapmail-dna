@@ -1,20 +1,9 @@
+use hdk::prelude::*;
+
 use hdk::{
-    error::{ZomeApiResult, ZomeApiError},
     entry_definition::ValidatingEntryType,
     holochain_persistence_api::{
         cas::content::Address
-    },
-    holochain_core_types::{
-        entry::Entry,
-    },
-};
-use holochain_wasm_utils::{
-    holochain_core_types::link::LinkMatch,
-};
-use crate::{
-    AgentAddress,
-    mail::entries::{
-        OutMail, InMail,
     },
 };
 
@@ -24,9 +13,9 @@ pub struct PendingAck {
     pub outmail_address: Address,
 }
 
-pub fn ackreceipt_encrypted_def() -> ValidatingEntryType {
+pub fn pending_ack_def() -> ValidatingEntryType {
     entry!(
-        name: "ackreceipt_encrypted",
+        name: "pending_ack",
         description: "Entry for an Acknowledgement Receipt of a Mail to be stored on the DHT",
         sharing: Sharing::Encrypted,
         validation_package: || {

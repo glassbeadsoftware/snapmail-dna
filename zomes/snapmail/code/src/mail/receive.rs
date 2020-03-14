@@ -1,17 +1,13 @@
-use hdk::prelude::*;
+// use hdk::prelude::*;
 
 use hdk::{
-    error::{ZomeApiError, ZomeApiResult},
     holochain_core_types::entry::Entry,
     holochain_json_api::json::JsonString,
-    holochain_persistence_api::{
-        cas::content::Address
-    },
 };
 use crate::{
     mail::{
         self,
-        entries::{ack::AckReceiptEncrypted, InMail, InAck, }
+        entries::InMail,
     },
     AgentAddress, DirectMessageProtocol, MailMessage, AckMessage,
     ReceivedMail, ReceivedAck,
@@ -22,7 +18,7 @@ use crate::{
 /// Returns Success or Failure.
 pub fn receive_direct_mail(from: AgentAddress, mail_msg: MailMessage) -> DirectMessageProtocol {
     // Create InMail
-    let inmail = InMail::from_direct(author, mail_msg);
+    let inmail = InMail::from_direct(from, mail_msg);
     let inmail_entry = Entry::App("inmail".into(), inmail.into());
     let maybe_inmail_address = hdk::commit_entry(&inmail_entry);
     if let Err(err) = maybe_inmail_address {

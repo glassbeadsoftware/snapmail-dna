@@ -1,35 +1,10 @@
 #![feature(proc_macro_hygiene)]
-#[macro_use]
 extern crate hdk;
 extern crate hdk_proc_macros;
 extern crate serde;
-#[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
-#[macro_use]
 extern crate holochain_json_derive;
-
-use hdk::{
-    entry_definition::ValidatingEntryType,
-    error::ZomeApiResult,
-};
-use hdk::holochain_core_types::{
-    entry::Entry,
-    agent::AgentId,
-    dna::entry_types::Sharing,
-};
-
-use hdk::holochain_json_api::{
-    json::JsonString,
-    error::JsonError
-};
-
-use hdk::holochain_persistence_api::{
-    cas::content::Address
-};
-
-use hdk_proc_macros::zome;
-use std::time::SystemTime;
 
 mod mail;
 mod handle;
@@ -38,10 +13,26 @@ mod protocol;
 mod signal_protocol;
 mod globals;
 
+use hdk::prelude::*;
+
+use hdk::error::ZomeApiError;
+use hdk::{
+    entry_definition::ValidatingEntryType,
+    error::ZomeApiResult,
+    holochain_json_api::json::JsonString,
+    holochain_persistence_api::{
+        cas::content::Address
+    },
+};
+
+use hdk_proc_macros::zome;
+
 pub use signal_protocol::*;
 pub use protocol::*;
 pub use utils::*;
 pub use globals::*;
+
+use mail::entries::*;
 
 pub type AgentAddress = Address;
 
@@ -51,10 +42,6 @@ pub type AgentAddress = Address;
 mod snapmail {
 
     // -- System -- //
-
-    use hdk::error::ZomeApiError;
-    use crate::AgentAddress;
-
 
     #[init]
     fn init() {
@@ -71,19 +58,19 @@ mod snapmail {
     #[receive]
     pub fn receive(from: Address, msg_json: JsonString) -> String {
         hdk::debug(format!("Received from: {:?}", from)).ok();
-        let maybe_msg: Result<DirectMessageProtocol, _> = msg_json.try_into();
+        let maybe_msg: Result<DirectMessageProtocol, _> = serde_json::from_str(&msg_json);
         if let Err(err) = maybe_msg {
             return format!("error: {}", err);
         }
         let message = match maybe_msg.unwrap() {
-            DirectMessageProtocol::MailMessage(mail) => {
+            DirectMessageProtocol::Mail(mail) => {
                 mail::receive_direct_mail(from, mail)
             },
-            DirectMessageProtocol::AckMessage(ack) => {
+            DirectMessageProtocol::Ack(ack) => {
                 mail::receive_direct_ack(from, ack)
             }
         };
-        let msg_json = serde_json::to_string(message).expect("Should stringify");
+        let msg_json = serde_json::to_string(&message).expect("Should stringify");
         msg_json
     }
 
@@ -96,32 +83,32 @@ mod snapmail {
 
     #[entry_def]
      fn outmail_def() -> ValidatingEntryType {
-        mail::outmail_def()
+        mail::entries::outmail_def()
     }
 
     #[entry_def]
     fn inmail_def() -> ValidatingEntryType {
-        mail::inmail_def()
+        mail::entries::inmail_def()
     }
 
     #[entry_def]
     fn pending_mail_def() -> ValidatingEntryType {
-        mail::pending_mail_def()
+        mail::entries::pending_mail_def()
     }
 
     #[entry_def]
     fn pending_ack_def() -> ValidatingEntryType {
-        mail::pending_ack_def()
+        mail::entries::pending_ack_def()
     }
 
     #[entry_def]
     fn outack_def() -> ValidatingEntryType {
-        mail::outack_def()
+        mail::entries::outack_def()
     }
 
     #[entry_def]
     fn inack_def() -> ValidatingEntryType {
-        mail::inack_def()
+        mail::entries::inack_def()
     }
 
     // -- Zome Functions -- //
@@ -135,8 +122,8 @@ mod snapmail {
     #[zome_fn("hc_public")]
     fn get_handle() -> String {
         let maybe_current_handle_entry = handle::get_handle();
-        if let Some((_, current_handle_entry)) = maybe_current_handle {
-            let current_handle = into_typed::<Handle>(current_handle_entry)
+        if let Some((_, current_handle_entry)) = maybe_current_handle_entry {
+            let current_handle = into_typed::<handle::Handle>(current_handle_entry)
                 .expect("Should be a Handle entry");
             return current_handle.name;
         }
@@ -153,9 +140,9 @@ mod snapmail {
         to: Vec<AgentAddress>,
         cc: Vec<AgentAddress>,
         bcc: Vec<AgentAddress>,
-    ) -> ZomeApiResult<SendTotalResult> {
-        if to.size() + cc.size() + bcc.size() < 1 {
-            return ZomeApiError::Internal("Mail lacks receipients".into())
+    ) -> ZomeApiResult<mail::SendTotalResult> {
+        if to.len() + cc.len() + bcc.len() < 1 {
+            return Err(ZomeApiError::Internal("Mail lacks receipients".into()))
         }
         mail::send_mail(subject, payload, to, cc, bcc)
     }
@@ -195,10 +182,10 @@ mod snapmail {
 //        mail::acknowledge_mail(inmail_address)
 //    }
 
-//    /// Check if agent received AckReceipts from all receipients of one of this agent's OutMail.
+//    /// Check if agent received a receipt from all receipients of one of this agent's OutMail.
 //    /// If false, returns list of agents who's receipt is missing.
 //    #[zome_fn("hc_public")]
-//    fn has_mail_been_received(outmail_address: &Address) -> ZomeApiResult<Result<(), Vec<AgentAddress>>> {
+//    fn has_mail_been_received(outmail_address: &Address) -> ZomeApiResult<Result<(), Vec<&AgentAddress>>> {
 //        mail::has_mail_been_received(outmail_address)
 //    }
 

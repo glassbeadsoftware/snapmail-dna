@@ -1,29 +1,24 @@
-use hdk::{
-    error::{ZomeApiError, ZomeApiResult},
-    entry_definition::ValidatingEntryType,
-    holochain_persistence_api::{
-        cas::content::Address
-    },
-};
+use hdk::prelude::*;
+use hdk::holochain_persistence_api::cas::content::Address;
+
 use crate::{
     AgentAddress,
-    mail::Mail,
+    mail::entries::Mail,
 };
 
-
-#[derive(Clone, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub enum SignalProtocol {
     ReceivedMail(ReceivedMail),
     ReceivedAck(ReceivedAck),
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct ReceivedMail {
     pub from: AgentAddress,
     pub mail: Mail,
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct ReceivedAck {
     pub from: AgentAddress,
     pub for_mail: Address,

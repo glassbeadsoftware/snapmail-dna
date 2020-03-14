@@ -1,22 +1,15 @@
-use std::time::SystemTime;
+use hdk::prelude::*;
 
 use hdk::{
-    error::ZomeApiResult,
     entry_definition::ValidatingEntryType,
     holochain_core_types::{
-        entry::Entry,
         dna::entry_types::Sharing,
-    },
-    holochain_persistence_api::{
-        cas::content::Address,
     },
 };
 
 use crate::{
     AgentAddress,
-    mail::entries::{
-        Mail, PendingMail,
-    }
+    mail::entries::Mail,
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -51,7 +44,7 @@ pub fn outmail_def() -> ValidatingEntryType {
                     hdk::ValidationPackageDefinition::Entry
                 },
                 validation: | _validation_data: hdk::LinkValidationData| {
-                    // FIXME: Check if AckReceipt for this author already received?
+                    // FIXME: Check if receipt for this author already received?
                     Ok(())
                 }
             ),
@@ -90,7 +83,7 @@ impl OutMail {
         cc: Vec<AgentAddress>,
         bcc: Vec<AgentAddress>,
     ) -> Self {
-        assert_ne!(0, to.size() + cc.size() + bcc.size());
+        assert_ne!(0, to.len() + cc.len() + bcc.len());
         // TODO: remove duplicate receipients
         let date_sent = crate::snapmail_now();
         let mail = Mail { date_sent, subject, payload, to, cc };

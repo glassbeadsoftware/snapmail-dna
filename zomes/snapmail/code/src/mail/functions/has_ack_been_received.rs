@@ -1,6 +1,7 @@
+//use hdk::prelude::*;
+
 use hdk::{
     error::{ZomeApiResult, ZomeApiError},
-    entry_definition::ValidatingEntryType,
     holochain_persistence_api::{
         cas::content::Address
     },
@@ -10,7 +11,6 @@ use holochain_wasm_utils::{
     holochain_core_types::link::LinkMatch,
 };
 use crate::{
-    AgentAddress,
     mail::entries::{
         OutMail, InMail,
     },
@@ -20,18 +20,18 @@ use crate::{
 /// Ack is considered received if there is no pendingAck link or PendingAck has delete status
 pub fn has_ack_been_received(inmail_address: &Address) -> ZomeApiResult<bool> {
     // 0. Get InMail
-    let inmail = hdk::utils::get_as_type::<inMail>(inmail_address)?;
+    let inmail = hdk::utils::get_as_type::<InMail>(inmail_address.clone())?;
     // 1. Get OutAck
-    let links_result = hdk::get_links(inmail_address,"acknowledgement".into(), LinkMatch::Any)?;
-    if links_result.links().size() < 1 {
+    let links_result = hdk::get_links(inmail_address,LinkMatch::Exactly("acknowledgement"), LinkMatch::Any)?;
+    if links_result.links().len() < 1 {
         return Err(ZomeApiError::Internal("No acknowledgment has been sent for this mail".to_string()));
     }
     let outack_address = links_result.addresses()[0].clone();
     let outack = hdk::utils::get_as_type::<OutMail>(outack_address)?;
     // 2. Get OutAck pending link
-    let links_result = hdk::get_links(&outack_address,"pending".into(), LinkMatch::Any)?;
+    let links_result = hdk::get_links(&outack_address,LinkMatch::Exactly("pending"), LinkMatch::Any)?;
     // 3. If no link than return OK
-    if links_result.links().size() < 1 {
+    if links_result.links().len() < 1 {
         return Ok(true);
     }
     // 4. Otherwise get PendingAck crud status
