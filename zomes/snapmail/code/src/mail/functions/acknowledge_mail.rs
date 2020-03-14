@@ -26,7 +26,7 @@ use crate::{
 /// Return address of newly created OutAck
 pub fn acknowledge_mail(inmail_address: Address) -> ZomeApiResult<Address> {
     //  1. Make sure its an InMail
-    let inmail = hdk::utils::get_as_type::<InMail>(inmail_address)?;
+    let inmail = hdk::utils::get_as_type::<InMail>(inmail_address.clone())?;
     //  2. Make sure it has not already been acknowledged
     let res = hdk::get_links_count(&inmail_address, LinkMatch::Exactly("acknowledgment"), LinkMatch::Any)?;
     if res.count > 0 {
@@ -43,7 +43,7 @@ pub fn acknowledge_mail(inmail_address: Address) -> ZomeApiResult<Address> {
         return Ok(outack_address);
     }
     let err = res.err().unwrap();
-    hdk::debug(format!("Direct sharing of Acknowledgment failed: {}", err));
+    hdk::debug(format!("Direct sharing of Acknowledgment failed: {}", err)).ok();
     // 5. Otherwise share Acknowledgement via DHT
     let _ = acknowledge_mail_pending(&outack_address, &inmail.outmail_address, &inmail.from);
     Ok(outack_address)

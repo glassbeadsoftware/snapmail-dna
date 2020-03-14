@@ -31,7 +31,7 @@ pub(crate) fn get_entry_and_author(address: &Address) -> ZomeApiResult<(AgentAdd
     };
     let maybe_entry_result = hdk::get_entry_result(address, get_options);
     if let Err(err) = maybe_entry_result {
-        hdk::debug(format!("Failed getting address: {}", err));
+        hdk::debug(format!("Failed getting address: {}", err)).ok();
         return Err(err);
     }
     let entry_result = maybe_entry_result.unwrap();

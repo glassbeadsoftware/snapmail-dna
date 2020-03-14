@@ -1,4 +1,6 @@
 #![feature(proc_macro_hygiene)]
+#![allow(non_snake_case, non_camel_case_types, non_upper_case_globals)]
+
 extern crate hdk;
 extern crate hdk_proc_macros;
 extern crate serde;

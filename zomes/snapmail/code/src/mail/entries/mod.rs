@@ -14,13 +14,14 @@ pub use self::{
 
 use crate::AgentAddress;
 
+#[allow(dead_code)]
 pub enum OutMailState {
     CREATED,    // OutMail written
     SENT,       // PendingMail created and/or Some receipts have been received
     RECEIVED,   // All receipts have been received, no more PendingMail
 }
 
-#[allow(non_camel_case_types)]
+#[allow(dead_code)]
 pub enum InMailState {
     INCOMING, // PendingMail for this agent
     ARRIVED, // InMail written

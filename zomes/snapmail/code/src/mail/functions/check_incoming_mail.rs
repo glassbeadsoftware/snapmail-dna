@@ -28,6 +28,7 @@ pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
         //  1. Get entry on the DHT
         let maybe_pending_mail = mail::get_pending_mail(pending_address);
         if let Err(err) = maybe_pending_mail {
+            hdk::debug(format!("Getting PendingMail from DHT failed: {}", err)).ok();
             continue;
         }
         let (author, pending) = maybe_pending_mail.unwrap();
@@ -36,7 +37,7 @@ pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
         let inmail_entry = Entry::App("inmail".into(), inmail.into());
         let maybe_inmail_address = hdk::commit_entry(&inmail_entry);
         if maybe_inmail_address.is_err() {
-            hdk::debug("Failed committing InMail");
+            hdk::debug("Failed committing InMail").ok();
             continue;
         }
         new_inmails.push(maybe_inmail_address.unwrap());
@@ -48,15 +49,15 @@ pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
             "",
         );
         if let Err(err) = res {
-            hdk::debug("Remove ``mail_inbox`` link failed:");
-            hdk::debug(err);
+            hdk::debug("Remove ``mail_inbox`` link failed:").ok();
+            hdk::debug(err).ok();
             continue;
         }
         //  4. Delete PendingMail entry
         let res = hdk::remove_entry(pending_address);
         if let Err(err) = res {
-            hdk::debug("Delete PendingMail failed:");
-            hdk::debug(err);
+            hdk::debug("Delete PendingMail failed:").ok();
+            hdk::debug(err).ok();
             continue;
         }
     }

@@ -102,7 +102,7 @@ fn get_handle_internal() -> Option<(Address, Entry)> {
 /// Zome Function
 /// Set handle for this agent
 pub fn set_handle(name: String) -> ZomeApiResult<Address> {
-    let new_handle = Handle::new(name);
+    let new_handle = Handle::new(name.clone());
     let app_entry = Entry::App("handle".into(), new_handle.into());
     let maybe_current_handle_entry = get_handle_internal();
     if let Some((entry_address, current_handle_entry)) = maybe_current_handle_entry {
@@ -113,7 +113,7 @@ pub fn set_handle(name: String) -> ZomeApiResult<Address> {
             return Ok(entry_address);
         }
         // Really new name so just update entry
-        hdk::update_entry(app_entry, &entry_address)?;
+        hdk::update_entry(app_entry.clone(), &entry_address)?;
     }
     // First Handle ever, commit entry
     let entry_address = hdk::commit_entry(&app_entry)?;

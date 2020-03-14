@@ -46,7 +46,7 @@ impl SendTotalResult {
         }
     }
 
-    pub fn add_pending(mut self, kind: ReceipientKind, agentId: &AgentAddress, address: Address) {
+    pub fn add_pending(&mut self, kind: ReceipientKind, agentId: &AgentAddress, address: Address) {
         match kind {
             ReceipientKind::TO => self.to_pendings.insert(agentId.clone(), address),
             ReceipientKind::CC => self.cc_pendings.insert(agentId.clone(), address),
@@ -99,8 +99,8 @@ pub fn send_mail(
     cc: Vec<AgentAddress>,
     bcc: Vec<AgentAddress>,
 ) -> ZomeApiResult<SendTotalResult> {
-    let outmail = OutMail::create(subject, payload, to, cc, bcc);
-    let outmail_entry = Entry::App("outmail".into(), outmail.into());
+    let outmail = OutMail::create(subject, payload, to.clone(), cc.clone(), bcc.clone());
+    let outmail_entry = Entry::App("outmail".into(), outmail.clone().into());
     let outmail_address = hdk::commit_entry(&outmail_entry)?;
 
     let mut total_result = SendTotalResult::new(outmail_address.clone());
