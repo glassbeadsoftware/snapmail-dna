@@ -70,6 +70,7 @@ fn send_mail_to(outmail_address: &Address, mail: &Mail, destination: &AgentAddre
         payload,
         Timeout::new(crate::DIRECT_SEND_TIMEOUT_MS),
     );
+    hdk::debug(format!("send_mail_to() result = {:?}", result)).ok();
     //   c. Check Response
     if let Ok(response) = result {
         hdk::debug(format!("Received response: {:?}", response)).ok();
@@ -130,5 +131,7 @@ pub fn send_mail(
     }
 
     // Done
+    hdk::debug(format!("total_result: {:?}", total_result)).ok();
+
     Ok(total_result)
 }

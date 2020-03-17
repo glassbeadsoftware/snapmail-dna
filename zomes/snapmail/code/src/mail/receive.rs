@@ -53,6 +53,8 @@ pub fn receive_direct_mail(from: AgentAddress, mail_msg: MailMessage) -> DirectM
         hdk::debug(format!("{}: {}", response_str, err)).ok();
         return DirectMessageProtocol::Failure(response_str.to_string());
     }
+    hdk::debug(format!("inmail_address: {}", maybe_inmail_address.unwrap())).ok();
+
     // Emit signal
     let signal = ReceivedMail {
         from: from.clone(),

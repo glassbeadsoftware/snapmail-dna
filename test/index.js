@@ -44,62 +44,69 @@ const conductorConfig = Config.gen({myInstanceName: dna})
 //   await s.consistency()
 //   const result = await alex.call("myInstanceName", "snapmail", "get_my_handle", {})
 //   t.deepEqual(result.Ok, name)
+//
+//   const agentId = alex.info('myInstanceName').agentAddress
+//   const params2 = { agentId }
+//   const result2 = await alex.call("myInstanceName", "snapmail", "get_handle", params2)
+//   t.deepEqual(result2.Ok, name)
 // })
 
-orchestrator.registerScenario("test handle", async (s, t) => {
-  const {alex, billy} = await s.players({alex: conductorConfig, billy: conductorConfig}, true)
-  console.log('alex: ' + alex.info('myInstanceName').agentAddress)
-  const name = "alex"
-  const params = { name }
-  const addr = await alex.call("myInstanceName", "snapmail", "set_handle", params)
-  console.log('addr: ' + JSON.stringify(addr))
-  // Wait for all network activity to settle
-  await s.consistency()
-  const agentId = alex.info('myInstanceName').agentAddress
-  const params2 = { agentId }
-  const result = await billy.call("myInstanceName", "snapmail", "get_handle", params2)
-  t.deepEqual(result.Ok, name)
-})
 
-//
-// orchestrator.registerScenario("entry creation test", async (s, t) => {
-//
+// orchestrator.registerScenario("test handle", async (s, t) => {
 //   const {alex, billy} = await s.players({alex: conductorConfig, billy: conductorConfig}, true)
-//
-//   // Make a call to a Zome function
-//   // indicating the function, and passing it an input
-//   const test_outmail = {
-//     outmail: {
-//       mail: {
-//         subject: "test-outmail",
-//         payload: "blablabla",
-//         date_sent: 42,
-//         to: [],
-//         cc: []
-//       },
-//       bcc: []
-//     }
-//   }
-//
+//   console.log('alex: ' + alex.info('myInstanceName').agentAddress)
 //   const name = "alex"
 //   const params = { name }
 //   const addr = await alex.call("myInstanceName", "snapmail", "set_handle", params)
 //   console.log('addr: ' + JSON.stringify(addr))
 //   // Wait for all network activity to settle
 //   await s.consistency()
-//
-//   const result = await alex.call("myInstanceName", "snapmail", "get_handle", {})
-//   // debug logs
-//   console.log('result      : ' + result.Ok)
-//   // console.log('result      : ' + JSON.stringify(result.Ok.App))
-//   // const result_obj = JSON.parse(result.Ok.App[1])
-//   // console.log('result_obj  : ' + JSON.stringify(result_obj))
-//   // console.log('test_outmail: ' + JSON.stringify(alex_handle.name))
-//
-//   // const result = await billy.call("myInstanceName", "snapmail", "get_outmail", {"address": addr.Ok})
-//
-//   // check for equality of the actual and expected results
+//   const agentId = alex.info('myInstanceName').agentAddress
+//   const params2 = { agentId }
+//   const result = await billy.call("myInstanceName", "snapmail", "get_handle", params2)
 //   t.deepEqual(result.Ok, name)
 // })
+
+
+orchestrator.registerScenario("send via DM test", async (s, t) => {
+
+  const {alex, billy} = await s.players({alex: conductorConfig, billy: conductorConfig}, true)
+
+  // Make a call to a Zome function
+  // indicating the function, and passing it an input
+  const send_params = {
+      subject: "test-outmail",
+      payload: "blablabla",
+      to: [alex.info('myInstanceName').agentAddress],
+      cc: [],
+      bcc: []
+  }
+
+  const send_result = await billy.call("myInstanceName", "snapmail", "send_mail", send_params)
+  console.log('send_result: ' + JSON.stringify(send_result.Ok))
+  // Should receive via DM, so no pendings
+  t.deepEqual(send_result.Ok.to_pendings, {})
+
+  // Wait for all network activity to settle
+  await s.consistency()
+
+  const check_result = await alex.call("myInstanceName", "snapmail", "check_incoming_mail", {})
+  console.log('check_result      : ' + JSON.stringify(check_result.Ok))
+  t.deepEqual(check_result.Ok, [])
+
+  const arrived_result = await alex.call("myInstanceName", "snapmail", "get_all_arrived_mail", {})
+
+  console.log('arrived_result : ' + JSON.stringify(arrived_result.Ok[0]))
+  t.deepEqual(arrived_result.Ok.length, 1)
+  const mail_adr = arrived_result.Ok[0]
+
+  const mail_result = await alex.call("myInstanceName", "snapmail", "get_mail", {"address": mail_adr})
+  console.log('mail_result : ' + mail_result.Ok)
+  const result_obj = mail_result.Ok.mail
+  console.log('result_obj : ' + JSON.stringify(result_obj))
+
+  // check for equality of the actual and expected results
+  t.deepEqual(send_params.payload, result_obj.payload)
+})
 
 orchestrator.run()

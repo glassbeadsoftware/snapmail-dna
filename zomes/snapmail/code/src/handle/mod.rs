@@ -99,7 +99,7 @@ fn get_handle_internal(agentId: &AgentAddress) -> Option<(Address, Entry)> {
     let links_result = link_results.links();
     assert!(links_result.len() <= 1);
     if links_result.len() == 0 {
-        hdk::debug("No handle found for agent").ok();
+        hdk::debug(format!("No handle found for agent: {}", agentId)).ok();
         return None;
     }
     let entry_address = &links_result[0].address;

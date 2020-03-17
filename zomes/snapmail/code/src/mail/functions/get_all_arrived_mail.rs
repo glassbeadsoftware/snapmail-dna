@@ -16,6 +16,8 @@ pub fn get_all_arrived_mail() -> ZomeApiResult<Vec<Address>> {
     // 1. Get all InMails with query
     let result = hdk::query("inmail".into(),
                             0, 0)?;
+    hdk::debug(format!("get_all_arrived_mail: {:?}", result)).ok();
+
     // For each InMail
     let mut unreads = Vec::new();
     for inmail_address in &result {

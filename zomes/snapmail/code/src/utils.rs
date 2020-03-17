@@ -1,6 +1,3 @@
-//use hdk::prelude::*;
-
-use std::time::SystemTime;
 use std::convert::TryFrom;
 
 use hdk::{
@@ -9,11 +6,14 @@ use hdk::{
 };
 
 /// Returns number of seconds since UNIX_EPOCH
+/// TODO: Time not available in WASM
 pub fn snapmail_now() -> u64 {
-    let duration_since_epoch = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .expect("System time must not be before UNIX EPOCH");
-    duration_since_epoch.as_secs()
+    42
+    // hdk::now()
+// let duration_since_epoch = SystemTime::now();
+//        .duration_since(SystemTime::UNIX_EPOCH)
+//        .expect("System time must not be before UNIX EPOCH");
+//    duration_since_epoch.as_secs()
 }
 
 
