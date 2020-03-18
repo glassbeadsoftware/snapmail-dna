@@ -10,19 +10,19 @@ use hdk::{
 use holochain_wasm_utils::{
     holochain_core_types::link::LinkMatch,
 };
-//use crate::{
-//    mail::entries::{
-//        OutMail, InMail,
-//    },
-//};
+use crate::{
+    mail::entries::{
+        InMail,
+    },
+};
 
 /// Zome function
 /// Ack is considered received if there is no pendingAck link or PendingAck has delete status
 pub fn has_ack_been_received(inmail_address: Address) -> ZomeApiResult<bool> {
-    // 0. Get InMail
-    //let inmail = hdk::utils::get_as_type::<InMail>(inmail_address)?;
+    // 0. Get InMail (make sure InMail exists)
+    let _ = hdk::utils::get_as_type::<InMail>(inmail_address.clone())?;
     // 1. Get OutAck
-    let links_result = hdk::get_links(&inmail_address,LinkMatch::Exactly("acknowledgement"), LinkMatch::Any)?;
+    let links_result = hdk::get_links(&inmail_address,LinkMatch::Exactly("acknowledgment"), LinkMatch::Any)?;
     if links_result.links().len() < 1 {
         return Err(ZomeApiError::Internal("No acknowledgment has been sent for this mail".to_string()));
     }

@@ -32,7 +32,16 @@ const orchestrator = new Orchestrator({
 })
 
 const dna = Config.dna(dnaPath, 'scaffold-test')
-const conductorConfig = Config.gen({myInstanceName: dna})
+const conductorConfig = Config.gen(
+    {myInstanceName: dna}
+    //,
+    // {
+    //   network: {
+    //     type: 'sim2h',
+    //     sim2h_url: 'wss://0.0.0.0:9001'
+    //   }
+    //}
+    )
 
 orchestrator.registerScenario("entry creation test", async (s, t) => {
   const {alex} = await s.players({alex: conductorConfig}, true)
@@ -149,12 +158,31 @@ orchestrator.registerScenario("send via DM test", async (s, t) => {
   const mail_adr = arrived_result.Ok[0]
 
   const mail_result = await alex.call("myInstanceName", "snapmail", "get_mail", {"address": mail_adr})
-  console.log('mail_result : ' + mail_result.Ok)
+  console.log('mail_result : ' + JSON.stringify(mail_result.Ok))
   const result_obj = mail_result.Ok.mail
-  console.log('result_obj : ' + JSON.stringify(result_obj))
 
   // check for equality of the actual and expected results
   t.deepEqual(send_params.payload, result_obj.payload)
+
+  // -- ACK -- //
+
+  const received_result = await billy.call("myInstanceName", "snapmail", "has_mail_been_received", {"outmail_address": send_result.Ok.outmail})
+  console.log('received_result : ' + JSON.stringify(received_result.Ok))
+    t.deepEqual(1, received_result.Ok.Err.length)
+    t.deepEqual(alex.info('myInstanceName').agentAddress, received_result.Ok.Err[0])
+
+  const ack_result = await alex.call("myInstanceName", "snapmail", "acknowledge_mail", {"inmail_address": mail_adr})
+  console.log('ack_result1 : ' + ack_result.Ok)
+
+  await s.consistency()
+
+  const received_result2 = await billy.call("myInstanceName", "snapmail", "has_mail_been_received", {"outmail_address": send_result.Ok.outmail})
+  console.log('received_result2 : ' + JSON.stringify(received_result2.Ok))
+  t.deepEqual(null, received_result2.Ok.Ok)
+
+  const ack_result2 = await alex.call("myInstanceName", "snapmail", "has_ack_been_received", {"inmail_address": mail_adr})
+  console.log('ack_result2 : ' + JSON.stringify(ack_result2))
+  t.deepEqual(true, ack_result2.Ok)
 })
 
 orchestrator.run()

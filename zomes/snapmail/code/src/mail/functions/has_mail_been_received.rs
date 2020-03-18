@@ -21,19 +21,23 @@ pub fn has_mail_been_received(outmail_address: Address) -> ZomeApiResult<Result<
     let outmail = hdk::utils::get_as_type::<OutMail>(outmail_address.clone())?;
     // 2. Merge all recepients lists into one
     let all_recepients: Vec<AgentAddress> = [outmail.mail.to, outmail.mail.cc, outmail.bcc].concat();
+    hdk::debug(format!("all_recepients: {:?}", all_recepients)).ok();
     // 3. get all ``receipt`` links
     let links_result = hdk::get_links(&outmail_address, LinkMatch::Exactly("receipt"), LinkMatch::Any)?;
     // 4. Make list of Receipt authors
     let receipt_authors: Vec<AgentAddress> = links_result.tags()
-        .iter().map(|from_str| HashString::from(from_str.clone()))
+        .iter().map(|from_str| {
+        let hashstr: String = serde_json::from_str(from_str).unwrap();
+        HashString::from(hashstr)
+    })
         .collect();
+    hdk::debug(format!("receipt_authors: {:?}", receipt_authors)).ok();
+
     // 5. Diff lists
-    let diff: Vec<&AgentAddress>  = all_recepients.iter()
-        .filter(|recepient| !receipt_authors.contains(*recepient))
+    let diff: Vec<AgentAddress>  = all_recepients.into_iter()
+        .filter(|recepient| !receipt_authors.contains(recepient))
         .collect();
-    let diff: Vec<AgentAddress> = diff.iter()
-        .map(|adr| (*adr).clone())
-        .collect();
+    hdk::debug(format!("diff: {:?}", diff)).ok();
     Ok(if diff.len() > 0 {
         Err(diff)
     } else {
