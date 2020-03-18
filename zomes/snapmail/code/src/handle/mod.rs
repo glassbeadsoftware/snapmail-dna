@@ -40,7 +40,7 @@ pub fn handle_def() -> ValidatingEntryType {
                     "%agent_id",
                     link_type: "handle",
                     validation_package: || {
-                        hdk::ValidationPackageDefinition::Entry
+                        hdk::ValidationPackageDefinition::ChainFull
                     },
                     validation: | _validation_data: hdk::LinkValidationData| {
                         // FIXME: Can only set handle for self
