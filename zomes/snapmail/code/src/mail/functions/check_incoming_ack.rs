@@ -11,7 +11,7 @@ use holochain_wasm_utils::{
 };
 use crate::mail;
 
-/// Return list of outMail addresses for which we succesfully linked a new InAck
+/// Return list of outMail addresses for which we succesfully linked a new InAck out of PendingAcks
 pub fn check_incoming_ack() -> ZomeApiResult<Vec<Address>> {
     // Lookup `ack_inbox` links on my agentId
     let links_result = hdk::get_links(
