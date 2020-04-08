@@ -24,6 +24,7 @@ pub fn has_mail_been_received(outmail_address: Address) -> ZomeApiResult<Result<
     hdk::debug(format!("all_recepients: {:?}", all_recepients)).ok();
     // 3. get all ``receipt`` links
     let links_result = hdk::get_links(&outmail_address, LinkMatch::Exactly("receipt"), LinkMatch::Any)?;
+    hdk::debug(format!("links_result: {:?}", links_result)).ok();
     // 4. Make list of Receipt authors
     let receipt_authors: Vec<AgentAddress> = links_result.tags()
         .iter().map(|from_str| {

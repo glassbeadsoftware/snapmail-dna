@@ -62,17 +62,19 @@ pub(crate) fn get_pending_ack(ack_address: &Address) -> ZomeApiResult<(AgentAddr
 
 /// Return address of created InAck
 pub(crate) fn create_and_commit_inack(outmail_address: &Address, from: &AgentAddress) -> ZomeApiResult<Address> {
+    hdk::debug(format!("Create inAck for: {} ({})", outmail_address, from)).ok();
     // Create InAck
     let inack = InAck::new();
     let inack_entry = Entry::App("inack".into(), inack.into());
     let inack_address = hdk::commit_entry(&inack_entry)?;
     let json_from = serde_json::to_string(from).expect("Should stringify");
     // Create link from OutMail
-    let _ = hdk::link_entries(
+    let link_address = hdk::link_entries(
         outmail_address,
         &inack_address,
         "receipt",
         json_from.as_str().into(),
     )?;
+    hdk::debug(format!("inAck link address: {}", link_address)).ok();
     Ok(inack_address)
 }

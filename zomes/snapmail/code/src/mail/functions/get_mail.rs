@@ -7,7 +7,7 @@ use crate::mail::entries::{
     InMail, OutMail,
 };
 
-/// Get InMail our OutMail struct in local source chain at address
+/// Get InMail or OutMail struct in local source chain at address
 pub fn get_mail(address: Address) -> Option<Result<InMail, OutMail>> {
     let maybe_InMail = hdk::utils::get_as_type::<InMail>(address.clone());
     if let Ok(inmail) = maybe_InMail {
