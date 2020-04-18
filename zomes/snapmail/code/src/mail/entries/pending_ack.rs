@@ -17,7 +17,7 @@ pub fn pending_ack_def() -> ValidatingEntryType {
     entry!(
         name: "pending_ack",
         description: "Entry for an Acknowledgement Receipt of a Mail to be stored on the DHT",
-        sharing: Sharing::Encrypted,
+        sharing: Sharing::Public, // should be Encrypted
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },

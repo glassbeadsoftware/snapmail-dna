@@ -7,7 +7,7 @@ use hdk::{
     },
 };
 
-use super::{Mail, OutMail};
+use super::Mail;
 
 //-------------------------------------------------------------------------------------------------
 // Definition
@@ -26,11 +26,11 @@ pub fn pending_mail_def() -> ValidatingEntryType {
     entry!(
         name: "pending_mail",
         description: "Entry for a mail held in the DHT waiting to be received by its receipient",
-        sharing: Sharing::Encrypted,
+        sharing: Sharing::Public, // should be encrypted
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: | _validation_data: hdk::EntryValidationData<OutMail>| {
+        validation: | _validation_data: hdk::EntryValidationData<PendingMail>| {
             // FIXME
             Ok(())
         },

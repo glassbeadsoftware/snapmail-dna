@@ -22,10 +22,12 @@ pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
         LinkMatch::Exactly("mail_inbox"),
         LinkMatch::Any,
     )?;
+    hdk::debug(format!("incoming_mail links_result: {:?} (for {})", links_result, &*hdk::AGENT_ADDRESS)).ok();
     // For each link
     let mut new_inmails = Vec::new();
     for pending_address in &links_result.addresses() {
         //  1. Get entry on the DHT
+        hdk::debug(format!("pending mail address: {}", pending_address)).ok();
         let maybe_pending_mail = mail::get_pending_mail(pending_address);
         if let Err(err) = maybe_pending_mail {
             hdk::debug(format!("Getting PendingMail from DHT failed: {}", err)).ok();

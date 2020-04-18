@@ -32,6 +32,7 @@ pub fn acknowledge_mail(inmail_address: Address) -> ZomeApiResult<Address> {
     if res.count > 0 {
         return Err(ZomeApiError::Internal("Mail has already been acknowledged".to_string()));
     }
+    hdk::debug("No Acknowledgment yet").ok();
     // 3. Write OutAck
     let outack = OutAck::new();
     let outack_entry = Entry::App("outack".into(), outack.into());
@@ -70,6 +71,7 @@ fn acknowledge_mail_direct(outmail_address: &Address, from: &AgentAddress) -> Zo
     hdk::debug(format!("Received response: {:?}", response)).ok();
     let maybe_msg: Result<DirectMessageProtocol, _> = serde_json::from_str(&response);
     if let Err(err) = maybe_msg {
+        hdk::debug(format!("Received response -> Err: {}", err)).ok();
         return Err(ZomeApiError::Internal(format!("{}", err)));
     }
     match maybe_msg.unwrap() {

@@ -28,7 +28,7 @@ pub fn inmail_def() -> ValidatingEntryType {
     entry!(
             name: "inmail",
             description: "Entry for a received mail",
-            sharing: Sharing::Private,
+            sharing: Sharing::Public, // should be private
             validation_package: || {
                 hdk::ValidationPackageDefinition::Entry
             },

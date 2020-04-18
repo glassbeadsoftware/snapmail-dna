@@ -13,7 +13,7 @@ pub fn outack_def() -> ValidatingEntryType {
     entry!(
         name: "outack",
         description: "Entry for an Acknowledgement Receipt of a Mail authored by this agent",
-        sharing: Sharing::Private,
+        sharing: Sharing::Public, // should be private
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },

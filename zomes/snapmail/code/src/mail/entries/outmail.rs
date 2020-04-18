@@ -28,7 +28,7 @@ pub fn outmail_def() -> ValidatingEntryType {
     entry!(
         name: "outmail",
         description: "Entry for a mail authored by this agent",
-        sharing: Sharing::Private,
+        sharing: Sharing::Public, // should be private
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
@@ -50,7 +50,7 @@ pub fn outmail_def() -> ValidatingEntryType {
             ),
             to!(
                 "pending_mail",
-                link_type: "pending",
+                link_type: "pendings",
                 validation_package: || {
                     hdk::ValidationPackageDefinition::Entry
                 },
