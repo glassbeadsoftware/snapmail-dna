@@ -122,6 +122,7 @@ mod snapmail {
     pub fn get_handle(agentId: String) -> ZomeApiResult<String> {
         handle::get_handle(agentId.into())
     }
+
     /// Send mail to all receipients
     /// Returns Map of PendingMail entry per receipient
     /// Conditions: Mail must have at least one receipient

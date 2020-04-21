@@ -19,6 +19,8 @@ use crate::{
         InMail, PendingAck, OutAck,
     }
 }};
+//use crate::handle::get_handle;
+
 
 /// Zome function
 /// Return address of newly created OutAck
@@ -82,6 +84,7 @@ fn acknowledge_mail_direct(outmail_address: &Address, from: &AgentAddress) -> Zo
 /// Return address of newly created PendingAck
 /// Return PendingAck's address
 fn acknowledge_mail_pending(outack_address: &Address, outmail_address: &Address, from: &AgentAddress) -> ZomeApiResult<Address> {
+    //let handle_entry = get_handle();
     let pending_ack = PendingAck::new(outmail_address.clone());
     let pending_ack_entry = Entry::App(entry_kind::PendingAck.into(), pending_ack.into());
     let pending_ack_address = hdk::commit_entry(&pending_ack_entry)?;
