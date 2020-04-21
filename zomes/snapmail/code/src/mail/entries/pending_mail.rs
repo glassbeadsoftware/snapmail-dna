@@ -6,6 +6,7 @@ use hdk::{
         cas::content::Address
     },
 };
+use crate::{entry_kind, link_kind};
 
 use super::Mail;
 
@@ -24,7 +25,7 @@ pub struct PendingMail {
 
 pub fn pending_mail_def() -> ValidatingEntryType {
     entry!(
-        name: "pending_mail",
+        name: entry_kind::PendingMail,
         description: "Entry for a mail held in the DHT waiting to be received by its receipient",
         sharing: Sharing::Public, // should be encrypted
         validation_package: || {
@@ -36,8 +37,8 @@ pub fn pending_mail_def() -> ValidatingEntryType {
         },
         links: [
             from!(
-                "%agent_id",
-                link_type: "mail_inbox",
+                entry_kind::Handle,
+                link_type: link_kind::MailInbox,
                 validation_package: || {
                     hdk::ValidationPackageDefinition::Entry
                 },
@@ -62,6 +63,8 @@ impl PendingMail {
         }
     }
 
+
+// FIXME Encryption
 //    /// Create PendingMail from Mail and destination AgentId
 //    /// This will encrypt the Mail with the destination's key
 //    pub fn create(mail: Mail, _to: AgentId) -> Self {

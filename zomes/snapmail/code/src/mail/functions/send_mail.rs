@@ -14,7 +14,7 @@ use hdk::{
 use std::collections::HashMap;
 
 use crate::{
-    AgentAddress,
+    AgentAddress, link_kind, entry_kind,
     mail::entries::{PendingMail, ReceipientKind, Mail, OutMail},
     protocol::{
         MailMessage, DirectMessageProtocol,
@@ -83,7 +83,7 @@ fn send_mail_to(outmail_address: &Address, mail: &Mail, destination: &AgentAddre
     };
     // 2. Direct Send failed, so send to DHT instead by creating a PendingMail
     let pending = PendingMail::new(mail.clone(), outmail_address.clone());
-    let pending_entry = Entry::App("pending_mail".into(), pending.into());
+    let pending_entry = Entry::App(entry_kind::PendingMail.into(), pending.into());
     let pending_address_maybe = hdk::commit_entry(&pending_entry);
     if let Err(err) = pending_address_maybe.clone() {
         hdk::debug(format!("pending_mail commit failed = {:?}", err)).ok();
@@ -91,14 +91,14 @@ fn send_mail_to(outmail_address: &Address, mail: &Mail, destination: &AgentAddre
     };
     let pending_address = pending_address_maybe.unwrap();
     hdk::debug(format!("pending_address = {}", pending_address)).ok();
-    let link1_address_maybe = hdk::link_entries(&outmail_address, &pending_address, "pendings", &pending_address.to_string());
+    let link1_address_maybe = hdk::link_entries(&outmail_address, &pending_address, link_kind::Pendings, &pending_address.to_string());
     if let Err(err) = link1_address_maybe.clone() {
         hdk::debug(format!("link1 failed = {:?}", err)).ok();
         return Err(link1_address_maybe.err().unwrap());
     };
     let link1_address = link1_address_maybe.unwrap();
     hdk::debug(format!("link1_address = {}", link1_address)).ok();
-    let link2_address_maybe = hdk::link_entries(&destination, &pending_address, "mail_inbox", &*hdk::AGENT_ADDRESS.to_string());
+    let link2_address_maybe = hdk::link_entries(&destination, &pending_address, link_kind::MailInbox, &*hdk::AGENT_ADDRESS.to_string());
     if let Err(err) = link2_address_maybe.clone() {
         hdk::debug(format!("link2 failed = {:?}", err)).ok();
         return Err(link2_address_maybe.err().unwrap());
@@ -119,7 +119,7 @@ pub fn send_mail(
     bcc: Vec<AgentAddress>,
 ) -> ZomeApiResult<SendTotalResult> {
     let outmail = OutMail::create(subject, payload, to.clone(), cc.clone(), bcc.clone());
-    let outmail_entry = Entry::App("outmail".into(), outmail.clone().into());
+    let outmail_entry = Entry::App(entry_kind::OutMail.into(), outmail.clone().into());
     let outmail_address = hdk::commit_entry(&outmail_entry)?;
 
     let mut total_result = SendTotalResult::new(outmail_address.clone());

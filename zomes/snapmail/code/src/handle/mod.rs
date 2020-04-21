@@ -15,6 +15,7 @@ use hdk::{
 use crate::{
     AgentAddress,
     utils::into_typed,
+    entry_kind, link_kind,
 };
 
 /// Entry representing the username of an Agent
@@ -25,7 +26,7 @@ pub struct Handle {
 
 pub fn handle_def() -> ValidatingEntryType {
     entry!(
-        name: "handle",
+        name: entry_kind::Handle,
         description: "Entry for an Agent's public username",
         sharing: Sharing::Public,
         validation_package: || {
@@ -38,7 +39,7 @@ pub fn handle_def() -> ValidatingEntryType {
             links: [
                 from!(
                     "%agent_id",
-                    link_type: "handle",
+                    link_type: link_kind::Handle,
                     validation_package: || {
                         hdk::ValidationPackageDefinition::Entry
                     },
@@ -49,12 +50,12 @@ pub fn handle_def() -> ValidatingEntryType {
                 ),
                 from!(
                     "%dna",
-                    link_type: "member",
+                    link_type: link_kind::Members,
                     validation_package: || {
                         hdk::ValidationPackageDefinition::Entry
                     },
                     validation: | _validation_data: hdk::LinkValidationData| {
-                        // FIXME
+                        // FIXME: Only one handle per agent
                         Ok(())
                     }
                 )
@@ -93,7 +94,7 @@ pub fn get_my_handle() -> ZomeApiResult<String> {
 fn get_handle_internal(agentId: &AgentAddress) -> Option<(Address, Entry)> {
     let link_results = hdk::get_links(
         agentId,
-        LinkMatch::Exactly("handle"),
+        LinkMatch::Exactly(link_kind::Handle),
         LinkMatch::Any,
     ).expect("No reason for this to fail");
     let links_result = link_results.links();
@@ -113,7 +114,7 @@ fn get_handle_internal(agentId: &AgentAddress) -> Option<(Address, Entry)> {
 /// Set handle for this agent
 pub fn set_handle(name: String) -> ZomeApiResult<Address> {
     let new_handle = Handle::new(name.clone());
-    let app_entry = Entry::App("handle".into(), new_handle.into());
+    let app_entry = Entry::App(entry_kind::Handle.into(), new_handle.into());
     let maybe_current_handle_entry = get_handle_internal(&*hdk::AGENT_ADDRESS);
     if let Some((entry_address, current_handle_entry)) = maybe_current_handle_entry {
         // If handle already set to this value, just return current entry address
@@ -128,7 +129,7 @@ pub fn set_handle(name: String) -> ZomeApiResult<Address> {
     // First Handle ever, commit entry
     hdk::debug("First Handle for this agent!!!").ok();
     let entry_address = hdk::commit_entry(&app_entry)?;
-    let _ = hdk::link_entries(&*hdk::AGENT_ADDRESS, &entry_address, "handle", "")?;
+    let _ = hdk::link_entries(&*hdk::AGENT_ADDRESS, &entry_address, link_kind::Handle, "")?;
     return Ok(entry_address);
 }
 

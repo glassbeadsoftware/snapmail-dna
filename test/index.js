@@ -44,10 +44,11 @@ const conductorConfig = Config.gen(
     {myInstanceName: dna}
     ,
     {
-      network: {
-        type: 'sim2h',
-        sim2h_url: 'ws://sim2h.harris-braun.com:9047'
-      }
+        // logger: Config.logger({ type: "error" }),
+        network: {
+            type: 'sim2h',
+            sim2h_url: 'ws://sim2h.harris-braun.com:9047'
+        }
     }
     )
 

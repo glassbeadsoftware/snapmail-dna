@@ -10,13 +10,14 @@ use holochain_wasm_utils::{
     holochain_core_types::link::LinkMatch,
 };
 use crate::mail;
+use crate::link_kind;
 
 /// Return list of outMail addresses for which we succesfully linked a new InAck out of PendingAcks
 pub fn check_incoming_ack() -> ZomeApiResult<Vec<Address>> {
     // Lookup `ack_inbox` links on my agentId
     let links_result = hdk::get_links(
         &*hdk::AGENT_ADDRESS,
-        LinkMatch::Exactly("ack_inbox"),
+        LinkMatch::Exactly(link_kind::AckInbox),
         LinkMatch::Any)?;
     // For each link
     let mut updated_outmails = Vec::new();
@@ -38,7 +39,7 @@ pub fn check_incoming_ack() -> ZomeApiResult<Vec<Address>> {
         let res = hdk::remove_link(
             *hdk::AGENT_ADDRESS,
             &pending_ack_address,
-            "ack_inbox",
+            link_kind::AckInbox,
             "",
         );
         if let Err(err) = res {

@@ -8,7 +8,7 @@ use hdk::{
 };
 
 use crate::{
-    AgentAddress,
+    AgentAddress, link_kind, entry_kind,
     mail::entries::Mail,
 };
 
@@ -26,7 +26,7 @@ pub struct OutMail {
 /// Entry definition
 pub fn outmail_def() -> ValidatingEntryType {
     entry!(
-        name: "outmail",
+        name: entry_kind::OutMail,
         description: "Entry for a mail authored by this agent",
         sharing: Sharing::Public, // should be private
         validation_package: || {
@@ -38,8 +38,8 @@ pub fn outmail_def() -> ValidatingEntryType {
         },
         links: [
             to!(
-                "inack",
-                link_type: "receipt",
+                entry_kind::InAck,
+                link_type: link_kind::Receipt,
                 validation_package: || {
                     hdk::ValidationPackageDefinition::Entry
                 },
@@ -49,8 +49,8 @@ pub fn outmail_def() -> ValidatingEntryType {
                 }
             ),
             to!(
-                "pending_mail",
-                link_type: "pendings",
+                entry_kind::PendingMail,
+                link_type: link_kind::Pendings,
                 validation_package: || {
                     hdk::ValidationPackageDefinition::Entry
                 },

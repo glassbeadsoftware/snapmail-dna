@@ -12,14 +12,17 @@ use hdk::{
 use holochain_wasm_utils::{
     holochain_core_types::link::LinkMatch,
 };
-use crate::mail::{self, entries::InMail};
+use crate::{
+    link_kind, entry_kind,
+    mail::{self, entries::InMail},
+};
 
 /// Return list of new InMail addresses
 pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
     // Lookup `mail_inbox` links on my agentId
     let links_result = hdk::get_links(
         &*hdk::AGENT_ADDRESS,
-        LinkMatch::Exactly("mail_inbox"),
+        LinkMatch::Exactly(link_kind::MailInbox),
         LinkMatch::Any,
     )?;
     hdk::debug(format!("incoming_mail links_result: {:?} (for {})", links_result, &*hdk::AGENT_ADDRESS)).ok();
@@ -36,7 +39,7 @@ pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
         let (author, pending) = maybe_pending_mail.unwrap();
         //  2. Convert and Commit as InMail
         let inmail = InMail::from_pending(pending, author);
-        let inmail_entry = Entry::App("inmail".into(), inmail.into());
+        let inmail_entry = Entry::App(entry_kind::InMail.into(), inmail.into());
         let maybe_inmail_address = hdk::commit_entry(&inmail_entry);
         if maybe_inmail_address.is_err() {
             hdk::debug("Failed committing InMail").ok();
@@ -47,7 +50,7 @@ pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
         let res = hdk::remove_link(
             *hdk::AGENT_ADDRESS,
             &pending_address,
-            "mail_inbox",
+            link_kind::MailInbox,
             "",
         );
         if let Err(err) = res {

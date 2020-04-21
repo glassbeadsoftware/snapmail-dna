@@ -8,6 +8,7 @@ use hdk::{
     },
 };
 use crate::{
+    entry_kind,
     mail::{
         self,
         entries::InMail,
@@ -46,7 +47,7 @@ pub fn receive(from: Address, msg_json: JsonString) -> String {
 pub fn receive_direct_mail(from: AgentAddress, mail_msg: MailMessage) -> DirectMessageProtocol {
     // Create InMail
     let inmail = InMail::from_direct(from.clone(), mail_msg.clone());
-    let inmail_entry = Entry::App("inmail".into(), inmail.into());
+    let inmail_entry = Entry::App(entry_kind::InMail.into(), inmail.into());
     let maybe_inmail_address = hdk::commit_entry(&inmail_entry);
     if let Err(err) = maybe_inmail_address {
         let response_str = "Failed committing InMail";

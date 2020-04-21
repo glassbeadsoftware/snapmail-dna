@@ -17,9 +17,11 @@ use holochain_wasm_utils::{
 };
 
 use crate::{
+    link_kind, entry_kind,
     mail::entries::*,
     AgentAddress,
 };
+
 
 /// Conditions: Must be a single author entry type
 pub(crate) fn get_entry_and_author(address: &Address) -> ZomeApiResult<(AgentAddress, Entry)> {
@@ -65,14 +67,14 @@ pub(crate) fn create_and_commit_inack(outmail_address: &Address, from: &AgentAdd
     hdk::debug(format!("Create inAck for: {} ({})", outmail_address, from)).ok();
     // Create InAck
     let inack = InAck::new();
-    let inack_entry = Entry::App("inack".into(), inack.into());
+    let inack_entry = Entry::App(entry_kind::InAck.into(), inack.into());
     let inack_address = hdk::commit_entry(&inack_entry)?;
     let json_from = serde_json::to_string(from).expect("Should stringify");
     // Create link from OutMail
     let link_address = hdk::link_entries(
         outmail_address,
         &inack_address,
-        "receipt",
+        link_kind::Receipt,
         json_from.as_str().into(),
     )?;
     hdk::debug(format!("inAck link address: {}", link_address)).ok();

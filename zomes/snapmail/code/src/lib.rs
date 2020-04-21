@@ -14,6 +14,8 @@ mod utils;
 mod protocol;
 mod signal_protocol;
 mod globals;
+mod link_kind;
+mod entry_kind;
 
 use hdk::prelude::*;
 
@@ -33,6 +35,8 @@ pub use signal_protocol::*;
 pub use protocol::*;
 pub use utils::*;
 pub use globals::*;
+//pub use link_kind::*;
+pub use entry_kind::*;
 
 use mail::entries::*;
 
@@ -50,7 +54,7 @@ mod snapmail {
 
     #[init]
     fn init() {
-        // TODO: create initial username? (random?)
+        // TODO: create initial username with AgentId
         Ok(())
     }
 

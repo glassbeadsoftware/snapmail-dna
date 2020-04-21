@@ -13,14 +13,12 @@ use holochain_wasm_utils::{
     holochain_core_types::link::LinkMatch,
 };
 use crate::{
-    AgentAddress,
-    protocol::{DirectMessageProtocol, AckMessage},
-    mail::{
-        entries::{
-            InMail, PendingAck, OutAck,
-        }
-    },
-};
+    entry_kind, link_kind,
+    AgentAddress, protocol::{DirectMessageProtocol, AckMessage}, mail::{
+    entries::{
+        InMail, PendingAck, OutAck,
+    }
+}};
 
 /// Zome function
 /// Return address of newly created OutAck
@@ -28,16 +26,16 @@ pub fn acknowledge_mail(inmail_address: Address) -> ZomeApiResult<Address> {
     //  1. Make sure its an InMail
     let inmail = hdk::utils::get_as_type::<InMail>(inmail_address.clone())?;
     //  2. Make sure it has not already been acknowledged
-    let res = hdk::get_links_count(&inmail_address, LinkMatch::Exactly("acknowledgment"), LinkMatch::Any)?;
+    let res = hdk::get_links_count(&inmail_address, LinkMatch::Exactly(link_kind::Acknowledgment), LinkMatch::Any)?;
     if res.count > 0 {
         return Err(ZomeApiError::Internal("Mail has already been acknowledged".to_string()));
     }
     hdk::debug("No Acknowledgment yet").ok();
     // 3. Write OutAck
     let outack = OutAck::new();
-    let outack_entry = Entry::App("outack".into(), outack.into());
+    let outack_entry = Entry::App(entry_kind::OutAck.into(), outack.into());
     let outack_address = hdk::commit_entry(&outack_entry)?;
-    let _ = hdk::link_entries(&inmail_address, &outack_address, "acknowledgment", "")?;
+    let _ = hdk::link_entries(&inmail_address, &outack_address, link_kind::Acknowledgment, "")?;
     // 4. Try Direct sharing of Acknowledgment
     let res = acknowledge_mail_direct(&inmail.outmail_address, &inmail.from);
     if res.is_ok() {
@@ -85,9 +83,9 @@ fn acknowledge_mail_direct(outmail_address: &Address, from: &AgentAddress) -> Zo
 /// Return PendingAck's address
 fn acknowledge_mail_pending(outack_address: &Address, outmail_address: &Address, from: &AgentAddress) -> ZomeApiResult<Address> {
     let pending_ack = PendingAck::new(outmail_address.clone());
-    let pending_ack_entry = Entry::App("pending_ack".into(), pending_ack.into());
+    let pending_ack_entry = Entry::App(entry_kind::PendingAck.into(), pending_ack.into());
     let pending_ack_address = hdk::commit_entry(&pending_ack_entry)?;
-    let _ = hdk::link_entries(&outack_address, &pending_ack_address, "pending", "")?;
-    let _ = hdk::link_entries(&from, &pending_ack_address, "ack_inbox", &*hdk::AGENT_ADDRESS.to_string())?;
+    let _ = hdk::link_entries(&outack_address, &pending_ack_address, link_kind::Pending, "")?;
+    let _ = hdk::link_entries(&from, &pending_ack_address, link_kind::AckInbox, &*hdk::AGENT_ADDRESS.to_string())?;
     Ok(pending_ack_address)
 }
