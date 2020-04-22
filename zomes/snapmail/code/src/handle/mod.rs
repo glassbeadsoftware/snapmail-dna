@@ -13,6 +13,8 @@ use hdk::{
     holochain_core_types::time::Timeout,
 };
 
+use std::collections::HashMap;
+
 use crate::{
     AgentAddress,
     utils::into_typed,
@@ -88,10 +90,11 @@ pub fn get_handle(agentId: AgentAddress) -> ZomeApiResult<String> {
     return get_handle_string(maybe_current_handle_entry);
 }
 
+/// Return handle entry address and entry
 pub fn get_handle_entry(agentId: &AgentAddress) -> Option<(Address, Entry)> {
     let query_result = hdk::query(EntryType::Dna.into(), 0, 0);
     let dna_address = query_result.ok().unwrap()[0].clone();
-
+    hdk::debug(format!("dna_address33: {:?}", dna_address)).ok();
     let entry_opts = GetEntryOptions::new(StatusRequestKind::default(), false, true, Timeout::default());
     let entry_results = hdk::get_links_result(
         //&*hdk::DNA_ADDRESS,
@@ -100,7 +103,6 @@ pub fn get_handle_entry(agentId: &AgentAddress) -> Option<(Address, Entry)> {
         LinkMatch::Any,
         GetLinksOptions::default(),
         entry_opts,
-
     ).expect("No reason for this to fail");
     hdk::debug(format!("entry_results33: {:?}", entry_results)).ok();
 
@@ -128,6 +130,7 @@ pub fn get_my_handle() -> ZomeApiResult<String> {
     return get_handle_string(maybe_current_handle_entry);
 }
 
+/// Return (handle entry address, handle entry) pair
 pub fn get_my_handle_entry() -> Option<(Address, Entry)> {
     let link_results = hdk::get_links(
         &*hdk::AGENT_ADDRESS,
@@ -175,9 +178,51 @@ pub fn set_handle(name: String) -> ZomeApiResult<Address> {
     let query_result = hdk::query(EntryType::Dna.into(), 0, 0);
     //hdk::debug(format!("query_result42: {:?}", query_result)).ok();
     let dna_address = query_result.ok().unwrap()[0].clone();
-
-
+    hdk::debug(format!("dna_address31: {:?}", dna_address)).ok();
     let _ = hdk::link_entries(/*&*hdk::DNA_ADDRESS*/ &dna_address, &entry_address, link_kind::Members, "")?;
     return Ok(entry_address);
+}
+
+
+/// Ask an online agent its handle.
+/// Return (username, handle entry address) pair
+pub fn _get_handle_by_dm() -> Option<(String, Address)> {
+    // FIXME
+    return None;
+}
+
+
+/// Get all known users
+/// Return (AgentId -> Handle entry address) Map
+pub fn _get_all_handles() -> ZomeApiResult<HashMap<AgentAddress, Address>> {
+    let query_result = hdk::query(EntryType::Dna.into(), 0, 0);
+    let dna_address = query_result.ok().unwrap()[0].clone();
+    let entry_opts = GetEntryOptions::new(StatusRequestKind::default(), false, true, Timeout::default());
+    let entry_results = hdk::get_links_result(
+        //&*hdk::DNA_ADDRESS,
+        &dna_address,
+        LinkMatch::Exactly(link_kind::Members),
+        LinkMatch::Any,
+        GetLinksOptions::default(),
+        entry_opts,
+    ).expect("No reason for this to fail");
+    hdk::debug(format!("entry_results55: {:?}", entry_results)).ok();
+
+    // Find handle entry whose author is agentId
+    let mut res = HashMap::new();
+    // Find handle entry whose author is agentId
+    for maybe_entry_result in entry_results {
+        if let Ok(entry_result) = maybe_entry_result {
+            let item = match entry_result.result {
+                GetEntryResultType::Single(result_item) => result_item,
+                GetEntryResultType::All(history) => history.items[0].clone(),
+            };
+            let header = item.headers[0].clone();
+            let from = header.provenances()[0].clone();
+            res.insert(from.source(), header.entry_address().clone());
+        }
+    }
+    hdk::debug(format!("all_handles size: {}", res.len())).ok();
+    return Ok(res)
 }
 

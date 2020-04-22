@@ -1,7 +1,7 @@
 // use hdk::prelude::*;
 
 use hdk::{
-    error::ZomeApiResult,
+    error::{ZomeApiResult, ZomeApiError},
     holochain_persistence_api::{
         cas::content::Address
     },
@@ -19,13 +19,19 @@ use crate::{
 
 /// Return list of new InMail addresses
 pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
+    let maybe_my_handle_address = crate::handle::get_my_handle_entry();
+    if let None = maybe_my_handle_address {
+        return Err(ZomeApiError::Internal("This agent does not have a Handle set up".to_string()));
+    }
+    let my_handle_address = maybe_my_handle_address.unwrap().0;
     // Lookup `mail_inbox` links on my agentId
     let links_result = hdk::get_links(
-        &*hdk::AGENT_ADDRESS,
+        // &*hdk::AGENT_ADDRESS,
+        &my_handle_address,
         LinkMatch::Exactly(link_kind::MailInbox),
         LinkMatch::Any,
     )?;
-    hdk::debug(format!("incoming_mail links_result: {:?} (for {})", links_result, &*hdk::AGENT_ADDRESS)).ok();
+    hdk::debug(format!("incoming_mail links_result: {:?} (for {})", links_result, &my_handle_address)).ok();
     // For each link
     let mut new_inmails = Vec::new();
     for pending_address in &links_result.addresses() {
@@ -48,7 +54,8 @@ pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
         new_inmails.push(maybe_inmail_address.unwrap());
         //  3. Remove link from this agentId
         let res = hdk::remove_link(
-            *hdk::AGENT_ADDRESS,
+            //*hdk::AGENT_ADDRESS,
+            &my_handle_address,
             &pending_address,
             link_kind::MailInbox,
             "",

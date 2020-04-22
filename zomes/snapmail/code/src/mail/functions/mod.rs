@@ -6,7 +6,6 @@ mod get_mail;
 mod has_ack_been_received;
 mod has_mail_been_received;
 mod send_mail;
-mod get_all_handles;
 
 pub use self::{
     acknowledge_mail::*,

@@ -82,6 +82,13 @@ fn send_mail_to(outmail_address: &Address, mail: &Mail, destination: &AgentAddre
         }
     };
     // 2. Direct Send failed, so send to DHT instead by creating a PendingMail
+    // Get Handle address first
+    let maybe_destination_handle_address = crate::handle::get_handle_entry(destination);
+    if let None = maybe_destination_handle_address {
+        return Err(ZomeApiError::Internal("No handle has been sent for receiving agent".to_string()));
+    }
+    let destination_handle_address = maybe_destination_handle_address.unwrap().0;
+    //    a. Commit PendingMail
     let pending = PendingMail::new(mail.clone(), outmail_address.clone());
     let pending_entry = Entry::App(entry_kind::PendingMail.into(), pending.into());
     let pending_address_maybe = hdk::commit_entry(&pending_entry);
@@ -91,6 +98,7 @@ fn send_mail_to(outmail_address: &Address, mail: &Mail, destination: &AgentAddre
     };
     let pending_address = pending_address_maybe.unwrap();
     hdk::debug(format!("pending_address = {}", pending_address)).ok();
+    //    a. Commit Pendings Link
     let link1_address_maybe = hdk::link_entries(&outmail_address, &pending_address, link_kind::Pendings, &pending_address.to_string());
     if let Err(err) = link1_address_maybe.clone() {
         hdk::debug(format!("link1 failed = {:?}", err)).ok();
@@ -98,13 +106,15 @@ fn send_mail_to(outmail_address: &Address, mail: &Mail, destination: &AgentAddre
     };
     let link1_address = link1_address_maybe.unwrap();
     hdk::debug(format!("link1_address = {}", link1_address)).ok();
-    let link2_address_maybe = hdk::link_entries(&destination, &pending_address, link_kind::MailInbox, &*hdk::AGENT_ADDRESS.to_string());
+    //    a. Commit MailInbox Link
+    let link2_address_maybe = hdk::link_entries(&destination_handle_address, &pending_address, link_kind::MailInbox, &*hdk::AGENT_ADDRESS.to_string());
     if let Err(err) = link2_address_maybe.clone() {
         hdk::debug(format!("link2 failed = {:?}", err)).ok();
         return Err(link2_address_maybe.err().unwrap());
     };
     let link2_address = link2_address_maybe.unwrap();
     hdk::debug(format!("link2_address = {}", link2_address)).ok();
+    // Done
     Ok(SendSuccessKind::OK_PENDING(pending_address))
 }
 

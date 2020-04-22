@@ -1,7 +1,7 @@
 //use hdk::prelude::*;
 
 use hdk::{
-    error::{ZomeApiResult},
+    error::{ZomeApiResult, ZomeApiError},
     holochain_persistence_api::{
         cas::content::Address
     },
@@ -14,9 +14,15 @@ use crate::link_kind;
 
 /// Return list of outMail addresses for which we succesfully linked a new InAck out of PendingAcks
 pub fn check_incoming_ack() -> ZomeApiResult<Vec<Address>> {
+    let maybe_my_handle_address = crate::handle::get_my_handle_entry();
+    if let None = maybe_my_handle_address {
+        return Err(ZomeApiError::Internal("This agent does not have a Handle set up".to_string()));
+    }
+    let my_handle_address = maybe_my_handle_address.unwrap().0;
     // Lookup `ack_inbox` links on my agentId
     let links_result = hdk::get_links(
-        &*hdk::AGENT_ADDRESS,
+        // &*hdk::AGENT_ADDRESS,
+        &my_handle_address,
         LinkMatch::Exactly(link_kind::AckInbox),
         LinkMatch::Any)?;
     // For each link
@@ -37,7 +43,8 @@ pub fn check_incoming_ack() -> ZomeApiResult<Vec<Address>> {
         }
         //  - Delete link from my agentId
         let res = hdk::remove_link(
-            *hdk::AGENT_ADDRESS,
+            // *hdk::AGENT_ADDRESS,
+            &my_handle_address,
             &pending_ack_address,
             link_kind::AckInbox,
             "",
