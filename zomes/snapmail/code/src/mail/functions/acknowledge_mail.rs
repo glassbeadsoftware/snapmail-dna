@@ -19,8 +19,6 @@ use crate::{
         InMail, PendingAck, OutAck,
     }
 }};
-//use crate::handle::get_handle;
-
 
 /// Zome function
 /// Return address of newly created OutAck
@@ -46,7 +44,7 @@ pub fn acknowledge_mail(inmail_address: Address) -> ZomeApiResult<Address> {
     let err = res.err().unwrap();
     hdk::debug(format!("Direct sharing of Acknowledgment failed: {}", err)).ok();
     // 5. Otherwise share Acknowledgement via DHT
-    let _ = acknowledge_mail_pending(&outack_address, &inmail.outmail_address, &inmail.from);
+    let _ = acknowledge_mail_pending(&outack_address, &inmail.outmail_address, &inmail.from)?;
     Ok(outack_address)
 }
 
@@ -84,11 +82,18 @@ fn acknowledge_mail_direct(outmail_address: &Address, from: &AgentAddress) -> Zo
 /// Return address of newly created PendingAck
 /// Return PendingAck's address
 fn acknowledge_mail_pending(outack_address: &Address, outmail_address: &Address, from: &AgentAddress) -> ZomeApiResult<Address> {
-    //let handle_entry = get_handle();
+    // Get Handle address first
+    let maybe_handle_address = crate::handle::get_handle_entry(from);
+    if let None = maybe_handle_address {
+        return Err(ZomeApiError::Internal("No handle has been set for ack receiving agent".to_string()));
+    }
+    let handle_address = maybe_handle_address.unwrap().0;
+    // Commit PendingAck
     let pending_ack = PendingAck::new(outmail_address.clone());
     let pending_ack_entry = Entry::App(entry_kind::PendingAck.into(), pending_ack.into());
     let pending_ack_address = hdk::commit_entry(&pending_ack_entry)?;
     let _ = hdk::link_entries(&outack_address, &pending_ack_address, link_kind::Pending, "")?;
-    let _ = hdk::link_entries(&from, &pending_ack_address, link_kind::AckInbox, &*hdk::AGENT_ADDRESS.to_string())?;
+    let _ = hdk::link_entries(&handle_address, &pending_ack_address, link_kind::AckInbox, &*hdk::AGENT_ADDRESS.to_string())?;
+    hdk::debug(format!("pending_ack_address: {:?} (for {} ; from: {})", pending_ack_address, handle_address, from)).ok();
     Ok(pending_ack_address)
 }

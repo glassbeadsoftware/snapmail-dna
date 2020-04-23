@@ -88,9 +88,9 @@ orchestrator.registerScenario("send pending test", async (s, t) => {
     // t.deepEqual(check_result1.Ok, [])
 
     // Make sure Billy has a handle entry
-    const name = "billy"
+    let name = "billy"
     const params = { name }
-    const handle_address = await billy.call("myInstanceName", "snapmail", "set_handle", params)
+    let handle_address = await billy.call("myInstanceName", "snapmail", "set_handle", params)
     console.log('handle_address: ' + JSON.stringify(handle_address))
     t.match(handle_address.Ok, RegExp('Qm*'))
 
@@ -120,9 +120,9 @@ orchestrator.registerScenario("send pending test", async (s, t) => {
 
     await billy.spawn()
 
-    const handle_address2 = await billy.call("myInstanceName", "snapmail", "set_handle", params)
-    console.log('handle_address2: ' + JSON.stringify(handle_address2))
-    t.match(handle_address2.Ok, RegExp('Qm*'))
+    handle_address = await billy.call("myInstanceName", "snapmail", "set_handle", params)
+    console.log('handle_address2: ' + JSON.stringify(handle_address))
+    t.match(handle_address.Ok, RegExp('Qm*'))
 
     await s.consistency()
 
@@ -146,8 +146,45 @@ orchestrator.registerScenario("send pending test", async (s, t) => {
     // check for equality of the actual and expected results
     t.deepEqual(send_params.payload, result_obj.payload)
 
-    // Send pending Ack
-    // TODO
+    // -- Send pending Ack -- //
+
+    // Make sure Alex has a handle entry
+    name = "alex"
+    const params2 = { name }
+    let handle_address2 = await alex.call("myInstanceName", "snapmail", "set_handle", params2)
+    console.log('handle_address3: ' + JSON.stringify(handle_address2))
+    t.match(handle_address.Ok, RegExp('Qm*'))
+
+    await s.consistency()
+
+    const received_result = await alex.call("myInstanceName", "snapmail", "has_mail_been_received", {"outmail_address": send_result.Ok.outmail})
+    console.log('received_result1 : ' + JSON.stringify(received_result.Ok))
+    t.deepEqual(received_result.Ok.Err.length, 1)
+    t.deepEqual(received_result.Ok.Err[0], billy.info('myInstanceName').agentAddress)
+
+    await s.consistency()
+    await alex.kill()
+    await s.consistency()
+
+    const ack_result = await billy.call("myInstanceName", "snapmail", "acknowledge_mail", {"inmail_address": mail_adr})
+    console.log('ack_result1 : ' + ack_result.Ok)
+
+    await s.consistency()
+    await alex.spawn()
+    await s.consistency()
+
+    const check_result2 = await alex.call("myInstanceName", "snapmail", "check_incoming_ack", {})
+    console.log('check_result2      : ' + JSON.stringify(check_result2))
+    t.deepEqual(check_result2.Ok.length, 1)
+    t.match(check_result2.Ok[0], RegExp('Qm*'))
+
+    const received_result2 = await alex.call("myInstanceName", "snapmail", "has_mail_been_received", {"outmail_address": send_result.Ok.outmail})
+    console.log('received_result2 : ' + JSON.stringify(received_result2.Ok))
+    t.deepEqual(received_result2.Ok.Ok, null)
+
+    const ack_result2 = await billy.call("myInstanceName", "snapmail", "has_ack_been_received", {"inmail_address": mail_adr})
+    console.log('ack_result2 : ' + JSON.stringify(ack_result2))
+    t.deepEqual(ack_result2.Ok, true)
 })
 
 //

@@ -25,6 +25,7 @@ pub fn check_incoming_ack() -> ZomeApiResult<Vec<Address>> {
         &my_handle_address,
         LinkMatch::Exactly(link_kind::AckInbox),
         LinkMatch::Any)?;
+    hdk::debug(format!("incoming_ack links_result: {:?} (for {})", links_result, &my_handle_address)).ok();
     // For each link
     let mut updated_outmails = Vec::new();
     for pending_ack_address in &links_result.addresses() {

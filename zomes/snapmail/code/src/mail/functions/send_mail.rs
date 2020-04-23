@@ -85,7 +85,7 @@ fn send_mail_to(outmail_address: &Address, mail: &Mail, destination: &AgentAddre
     // Get Handle address first
     let maybe_destination_handle_address = crate::handle::get_handle_entry(destination);
     if let None = maybe_destination_handle_address {
-        return Err(ZomeApiError::Internal("No handle has been sent for receiving agent".to_string()));
+        return Err(ZomeApiError::Internal("No handle has been set for receiving agent".to_string()));
     }
     let destination_handle_address = maybe_destination_handle_address.unwrap().0;
     //    a. Commit PendingMail
