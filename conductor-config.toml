@@ -1,49 +1,57 @@
 bridges = []
-persistence_dir = '.'
-ui_bundles = []
-ui_interfaces = []
+persistence_dir = ''
 
 [[agents]]
 id = 'hc-run-agent'
-keystore_file = 'unused'
-name = 'snapmail user'
-public_address = 'HcScIc8G7X769Nr6cnRxgR73wi8au946z7hc46EMDJjaz8au4bD7V6hj7T6B8fa'
+keystore_file = 'testAgent'
+name = 'testAgent'
+public_address = 'HcScjN8wBwrn3tuyg89aab3a69xsIgdzmX5P9537BqQZ5A7TEZu7qCY4Xzzjhma'
 test_agent = true
 
 [[dnas]]
-file = './dist/snapmail-dna.dna.json'
-hash = 'QmUdL1UAZoELZPWUHBgJ4wosXZZvTVcQajA6p74zxdbfVm'
-id = 'hc-run-dna'
+file = 'dist/snapmail-dna.dna.json'
+hash = 'QmRMQDfvTNgYHLGVWZonSyg8iKqGMykZLK72btQ2r4xt4h'
+id = '__snapmail'
 
 [[instances]]
 agent = 'hc-run-agent'
-dna = 'hc-run-dna'
-id = 'snapmail'
+dna = '__snapmail'
+id = '__snapmail'
 
 [instances.storage]
 type = 'memory'
 
 [[interfaces]]
-admin = true
-id = 'websocket-interface'
+admin = false
+choose_free_port = false
+id = 'snapmail_web_ui'
 
 [[interfaces.instances]]
-id = 'snapmail'
+alias = 'test-instance'
+id = '__snapmail'
 
 [interfaces.driver]
-port = 8888
+port = 50000
 type = 'websocket'
 
+[[ui_bundles]]
+id = 'snapmail_web_ui'
+root_dir = '../snapmail-ui/dist'
+
+[[ui_interfaces]]
+bind_address = '127.0.0.1'
+bundle = 'snapmail_web_ui'
+dna_interface = 'snapmail_web_ui'
+id = 'snapmail_web_ui'
+port = 8888
+reroute_to_root = false
+
 [logger]
-state_dump = false
-type = 'info'
+state_dump = true
+type = 'debug'
 
 [logger.rules]
 rules = []
-
-# [network]
-# sim2h_url = 'ws://sim2h.harris-braun.com:9000'
-# type = 'sim2h'
 
 [passphrase_service]
 type = 'cmd'
