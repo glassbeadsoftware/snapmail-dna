@@ -164,7 +164,7 @@ pub fn set_handle(name: String) -> ZomeApiResult<Address> {
             return Ok(entry_address);
         }
         // Really new name so just update entry
-        hdk::update_entry(app_entry.clone(), &entry_address)?;
+        return hdk::update_entry(app_entry.clone(), &entry_address);
     }
     // First Handle ever, commit entry
     hdk::debug("First Handle for this agent!!!").ok();
