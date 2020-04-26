@@ -204,7 +204,7 @@ pub fn get_all_handles() -> ZomeApiResult<Vec<(String, AgentAddress, Address)>> 
         GetLinksOptions::default(),
         entry_opts,
     ).expect("No reason for this to fail");
-    hdk::debug(format!("entry_results55: {:?}", entry_results)).ok();
+    hdk::debug(format!("entry_results55 size: {:?}", entry_results.len())).ok();
 
     // Find handle entry whose author is agentId
     let mut handle_list = Vec::new();
