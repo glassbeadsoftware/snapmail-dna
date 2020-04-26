@@ -119,8 +119,13 @@ mod snapmail {
 
     /// Get some agent's latest handle
     #[zome_fn("hc_public")]
-    pub fn get_handle(agentId: String) -> ZomeApiResult<String> {
+    fn get_handle(agentId: String) -> ZomeApiResult<String> {
         handle::get_handle(agentId.into())
+    }
+
+    #[zome_fn("hc_public")]
+    fn get_all_handles() -> ZomeApiResult<Vec<(String, AgentAddress, Address)>> {
+        handle::get_all_handles()
     }
 
     /// Send mail to all receipients
@@ -145,6 +150,10 @@ mod snapmail {
     fn get_mail(address: Address) -> Option<Result<InMail, OutMail>> {
         mail::get_mail(address)
     }
+
+    /// Get all InMails and OutMails
+    #[zome_fn("hc_public")]
+    fn get_all_mails() -> ZomeApiResult<Vec<MailItem>> { mail::get_all_mails() }
 
     /// Return list of all InMails that this agent did not acknowledge.
     #[zome_fn("hc_public")]

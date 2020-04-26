@@ -14,19 +14,55 @@ pub use self::{
 
 use crate::AgentAddress;
 
-#[allow(dead_code)]
-pub enum OutMailState {
-    CREATED,    // OutMail written
-    SENT,       // PendingMail created and/or Some receipts have been received
-    RECEIVED,   // All receipts have been received, no more PendingMail
+// #[allow(dead_code)]
+// pub enum OutMailState {
+//     CREATED,    // OutMail written
+//     SENT,       // PendingMail created and/or Some receipts have been received
+//     RECEIVED,   // All receipts have been received, no more PendingMail
+// }
+//
+
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone, PartialEq)]
+pub enum InMailState {
+    // PendingMail available
+    Incoming,
+    // InMail written, no pendingMail
+    Arrived,
+    // OutAck written, PendingAck available
+    Acknowledged,
+    // OutAck written, no PendingAck
+    AckReceived,
 }
 
-#[allow(dead_code)]
-pub enum InMailState {
-    INCOMING, // PendingMail for this agent
-    ARRIVED, // InMail written
-    ACKNOWLEDGED, // OutAck written
-    ACK_RECEIVED, // OutAck has been received, no PendingAck
+
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone, PartialEq)]
+pub enum OutMailState {
+    // Has a pending link for each receipient
+    Pending,
+    // Has less pending links than receipients and no receipt links
+    PartiallyArrived_NoAcknowledgement,
+    // Has less pending links than receipients and less receipt links than receipients
+    PartiallyArrived_PartiallyAcknowledged,
+    // Has receipt link for each receipient and no receipt links
+    Arrived_NoAcknowledgement,
+    // Has receipt link for each receipient and less receipt links than receipients
+    Arrived_PartiallyAcknowledged,
+    // Has no pendings link and a receipt link for each receipient
+    Received,
+}
+
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone, PartialEq)]
+pub enum MailState {
+    In(InMailState),
+    Out(OutMailState),
+}
+
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
+pub struct MailItem {
+    pub mail: Mail,
+    pub state: MailState,
+    pub bcc: Vec<AgentAddress>,
+    pub date: i64,
 }
 
 
@@ -46,22 +82,4 @@ pub struct Mail {
     pub payload: String,
     pub to: Vec<AgentAddress>,
     pub cc: Vec<AgentAddress>,
-}
-
-impl Mail {
-    pub fn new(
-        date_sent: u64,
-        subject: String,
-        payload: String,
-        to: Vec<AgentAddress>,
-        cc: Vec<AgentAddress>,
-    ) -> Self {
-        Self {
-            date_sent,
-            subject,
-            payload,
-            to,
-            cc
-        }
-    }
 }

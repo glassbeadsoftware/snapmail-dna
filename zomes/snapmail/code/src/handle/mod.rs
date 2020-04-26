@@ -13,8 +13,6 @@ use hdk::{
     holochain_core_types::time::Timeout,
 };
 
-use std::collections::HashMap;
-
 use crate::{
     AgentAddress,
     utils::into_typed,
@@ -194,10 +192,10 @@ pub fn _get_handle_by_dm() -> Option<(String, Address)> {
 
 /// Get all known users
 /// Return (AgentId -> Handle entry address) Map
-pub fn _get_all_handles() -> ZomeApiResult<HashMap<AgentAddress, Address>> {
+pub fn get_all_handles() -> ZomeApiResult<Vec<(String, AgentAddress, Address)>> {
     let query_result = hdk::query(EntryType::Dna.into(), 0, 0);
     let dna_address = query_result.ok().unwrap()[0].clone();
-    let entry_opts = GetEntryOptions::new(StatusRequestKind::default(), false, true, Timeout::default());
+    let entry_opts = GetEntryOptions::new(StatusRequestKind::default(), true, true, Timeout::default());
     let entry_results = hdk::get_links_result(
         //&*hdk::DNA_ADDRESS,
         &dna_address,
@@ -209,7 +207,7 @@ pub fn _get_all_handles() -> ZomeApiResult<HashMap<AgentAddress, Address>> {
     hdk::debug(format!("entry_results55: {:?}", entry_results)).ok();
 
     // Find handle entry whose author is agentId
-    let mut res = HashMap::new();
+    let mut handle_list = Vec::new();
     // Find handle entry whose author is agentId
     for maybe_entry_result in entry_results {
         if let Ok(entry_result) = maybe_entry_result {
@@ -217,12 +215,14 @@ pub fn _get_all_handles() -> ZomeApiResult<HashMap<AgentAddress, Address>> {
                 GetEntryResultType::Single(result_item) => result_item,
                 GetEntryResultType::All(history) => history.items[0].clone(),
             };
+            let entry = item.entry.unwrap();
+            let handle_entry = crate::into_typed::<Handle>(entry).expect("Should be Handle");
             let header = item.headers[0].clone();
             let from = header.provenances()[0].clone();
-            res.insert(from.source(), header.entry_address().clone());
+            handle_list.push((handle_entry.name.clone(), from.source(), header.entry_address().clone()));
         }
     }
-    hdk::debug(format!("all_handles size: {}", res.len())).ok();
-    return Ok(res)
+    hdk::debug(format!("handle_map size: {}", handle_list.len())).ok();
+    return Ok(handle_list)
 }
 

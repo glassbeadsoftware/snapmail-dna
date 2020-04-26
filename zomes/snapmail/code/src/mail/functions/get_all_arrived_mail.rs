@@ -9,13 +9,13 @@ use hdk::{
 use holochain_wasm_utils::{
     holochain_core_types::link::LinkMatch,
 };
-use crate::link_kind;
+use crate::{link_kind, entry_kind};
 
 /// Zome Function
 /// Return list of all InMails that this agent did not acknowledge.
 pub fn get_all_arrived_mail() -> ZomeApiResult<Vec<Address>> {
     // 1. Get all InMails with query
-    let result = hdk::query("inmail".into(),
+    let result = hdk::query(entry_kind::InMail.into(),
                             0, 0)?;
     hdk::debug(format!("get_all_arrived_mail: {:?}", result)).ok();
 
