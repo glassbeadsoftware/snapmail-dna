@@ -110,43 +110,42 @@ const conductorConfig = Config.gen(
 //     t.deepEqual(result.Ok, name)
 // })
 
-orchestrator.registerScenario("test handle list", async (s, t) => {
-  const {alex, billy, camille} = await s.players({alex: conductorConfig, billy: conductorConfig, camille: conductorConfig}, true)
-
-  // Set Alex
-  let name = "alex"
-  let params = { name }
-  let handle_address = await alex.call("myInstanceName", "snapmail", "set_handle", params)
-  console.log('handle_address1: ' + JSON.stringify(handle_address))
-  t.match(handle_address.Ok, RegExp('Qm*'))
-  await s.consistency()
-
-  // Set billy
-  name = "billy"
-  params = { name }
-  handle_address = await billy.call("myInstanceName", "snapmail", "set_handle", params)
-  console.log('handle_address2: ' + JSON.stringify(handle_address))
-  t.match(handle_address.Ok, RegExp('Qm*'))
-  await s.consistency()
-
-
-  let result = await billy.call("myInstanceName", "snapmail", "get_all_handles", {})
-  console.log('handle_list: ' + JSON.stringify(result))
-    t.deepEqual(result.Ok.length, 2)
-
-  // Set camille
-  name = "camille"
-  params = { name }
-  handle_address = await camille.call("myInstanceName", "snapmail", "set_handle", params)
-  console.log('handle_address3: ' + JSON.stringify(handle_address))
-  t.match(handle_address.Ok, RegExp('Qm*'))
-  await s.consistency()
-
-  result = await billy.call("myInstanceName", "snapmail", "get_all_handles", {})
-  console.log('handle_list: ' + JSON.stringify(result))
-  t.deepEqual(result.Ok.length, 3)
-
-})
+// orchestrator.registerScenario("test handle list", async (s, t) => {
+//   const {alex, billy, camille} = await s.players({alex: conductorConfig, billy: conductorConfig, camille: conductorConfig}, true)
+//
+//   // Set Alex
+//   let name = "alex"
+//   let params = { name }
+//   let handle_address = await alex.call("myInstanceName", "snapmail", "set_handle", params)
+//   console.log('handle_address1: ' + JSON.stringify(handle_address))
+//   t.match(handle_address.Ok, RegExp('Qm*'))
+//   await s.consistency()
+//
+//   // Set billy
+//   name = "billy"
+//   params = { name }
+//   handle_address = await billy.call("myInstanceName", "snapmail", "set_handle", params)
+//   console.log('handle_address2: ' + JSON.stringify(handle_address))
+//   t.match(handle_address.Ok, RegExp('Qm*'))
+//   await s.consistency()
+//
+//
+//   let result = await billy.call("myInstanceName", "snapmail", "get_all_handles", {})
+//   console.log('handle_list: ' + JSON.stringify(result))
+//     t.deepEqual(result.Ok.length, 2)
+//
+//   // Set camille
+//   name = "camille"
+//   params = { name }
+//   handle_address = await camille.call("myInstanceName", "snapmail", "set_handle", params)
+//   console.log('handle_address3: ' + JSON.stringify(handle_address))
+//   t.match(handle_address.Ok, RegExp('Qm*'))
+//   await s.consistency()
+//
+//   result = await billy.call("myInstanceName", "snapmail", "get_all_handles", {})
+//   console.log('handle_list: ' + JSON.stringify(result))
+//   t.deepEqual(result.Ok.length, 3)
+// })
 
 //
 // //
@@ -321,5 +320,59 @@ orchestrator.registerScenario("test handle list", async (s, t) => {
 //   t.deepEqual(ack_result2.Ok, true)
 // })
 
+//
+orchestrator.registerScenario("get all mails test", async (s, t) => {
+
+  const {alex, billy} = await s.players({alex: conductorConfig, billy: conductorConfig}, true)
+
+  // Send mail DM
+  let send_params = {
+      subject: "inmail 1",
+      payload: "aaaaaaaa",
+      to: [alex.info('myInstanceName').agentAddress],
+      cc: [],
+      bcc: []
+  }
+  let send_result = await billy.call("myInstanceName", "snapmail", "send_mail", send_params)
+  console.log('send_result1: ' + JSON.stringify(send_result.Ok))
+  t.deepEqual(send_result.Ok.to_pendings, {})
+  await s.consistency()
+
+  // Send mail DM
+  send_params = {
+    subject: "inmail 2",
+    payload: "bbbb",
+    to: [alex.info('myInstanceName').agentAddress],
+    cc: [],
+    bcc: []
+  }
+  send_result = await billy.call("myInstanceName", "snapmail", "send_mail", send_params)
+  console.log('send_result2: ' + JSON.stringify(send_result.Ok))
+  t.deepEqual(send_result.Ok.to_pendings, {})
+  await s.consistency()
+
+  // Send mail DM
+  send_params = {
+    subject: "outmail 3",
+    payload: "ccccccc",
+    to: [billy.info('myInstanceName').agentAddress],
+    cc: [],
+    bcc: []
+  }
+  send_result = await alex.call("myInstanceName", "snapmail", "send_mail", send_params)
+  console.log('send_result3: ' + JSON.stringify(send_result.Ok))
+  t.deepEqual(send_result.Ok.to_pendings, {})
+  await s.consistency()
+
+  // Get all mails
+  const mail_list_result = await alex.call("myInstanceName", "snapmail", "get_all_mails", {})
+  console.log('mail_list_result : ' + JSON.stringify(mail_list_result))
+  t.deepEqual(mail_list_result.Ok.length, 3)
+
+  // const mail_result = await alex.call("myInstanceName", "snapmail", "get_mail", {"address": mail_adr})
+  // console.log('mail_result : ' + JSON.stringify(mail_result.Ok))
+  // const result_obj = mail_result.Ok.mail
+  // t.deepEqual(send_params.payload, result_obj.payload)
+})
 
 orchestrator.run()
