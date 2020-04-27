@@ -368,11 +368,7 @@ orchestrator.registerScenario("get all mails test", async (s, t) => {
   const mail_list_result = await alex.call("myInstanceName", "snapmail", "get_all_mails", {})
   console.log('mail_list_result : ' + JSON.stringify(mail_list_result))
   t.deepEqual(mail_list_result.Ok.length, 3)
-
-  // const mail_result = await alex.call("myInstanceName", "snapmail", "get_mail", {"address": mail_adr})
-  // console.log('mail_result : ' + JSON.stringify(mail_result.Ok))
-  // const result_obj = mail_result.Ok.mail
-  // t.deepEqual(send_params.payload, result_obj.payload)
+  t.deepEqual(mail_list_result.Ok[0].mail.payload, send_params.payload)
 })
 
 orchestrator.run()

@@ -39,15 +39,15 @@ pub enum InMailState {
 pub enum OutMailState {
     // Has a pending link for each receipient
     Pending,
-    // Has less pending links than receipients and no receipt links
+    // Has less pending links than receipients, and no receipt links
     PartiallyArrived_NoAcknowledgement,
-    // Has less pending links than receipients and less receipt links than receipients
+    // Has less pending links than receipients, and less receipt links than receipients
     PartiallyArrived_PartiallyAcknowledged,
-    // Has receipt link for each receipient and no receipt links
+    // Has no pending links, and a receipt link for each receipient
     Arrived_NoAcknowledgement,
-    // Has receipt link for each receipient and less receipt links than receipients
+    // Has no pending links, and less receipt links than receipients
     Arrived_PartiallyAcknowledged,
-    // Has no pendings link and a receipt link for each receipient
+    // Has no pendings links, and a receipt link for each receipient
     Received,
 }
 

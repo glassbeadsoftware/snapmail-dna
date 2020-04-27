@@ -1,27 +1,79 @@
 // use hdk::prelude::*;
 
 use hdk::{
-    error::ZomeApiResult,
+    error::{ZomeApiResult, ZomeApiError},
     holochain_persistence_api::{
-        cas::content::Address
-    },
-    holochain_core_types::{
-        entry::Entry,
-        time::Timeout,
+    cas::content::Address
+}, holochain_core_types::{
+    entry::Entry,
+    time::Timeout,
     },
 };
 use holochain_wasm_utils::{
     api_serialization::get_entry::{
         GetEntryOptions, StatusRequestKind, GetEntryResultType,
     },
+    holochain_core_types::link::LinkMatch,
 };
-
 use crate::{
     link_kind, entry_kind,
     mail::entries::*,
     AgentAddress,
 };
 
+/// Get State of InMail at given address
+pub(crate) fn get_outmail_state(outmail_address: &Address) -> ZomeApiResult<OutMailState> {
+    // 1. Get OutMail
+    let maybe_outmail = hdk::utils::get_as_type::<OutMail>(outmail_address.clone());
+    if let Err(_) = maybe_outmail {
+        return Err(ZomeApiError::Internal("No OutMail at given address".to_string()));
+    }
+    let outmail = maybe_outmail.unwrap();
+    let receipient_count = outmail.bcc.len() + outmail.mail.to.len() + outmail.mail.cc.len();
+    // 2. Get Pendings links
+    let pendings = hdk::get_links_count(&outmail_address, LinkMatch::Exactly(link_kind::Pendings), LinkMatch::Any)?;
+    // 3. Get Receipt links
+    let receipts = hdk::get_links_count(&outmail_address, LinkMatch::Exactly(link_kind::Receipt), LinkMatch::Any)?;
+    // 4. Determine state
+    if pendings.count == receipient_count {
+        return Ok(OutMailState::Pending);
+    }
+    if pendings.count == 0 {
+        if receipts.count == 0 {
+            return Ok(OutMailState::Arrived_NoAcknowledgement);
+        }
+        if receipts.count == receipient_count {
+            return Ok(OutMailState::Received);
+        }
+        return Ok(OutMailState::Arrived_PartiallyAcknowledged);
+    }
+    if receipts.count == 0 {
+        return Ok(OutMailState::PartiallyArrived_NoAcknowledgement);
+    }
+    return Ok(OutMailState::PartiallyArrived_PartiallyAcknowledged);
+}
+
+/// Get State of InMail at given address
+pub(crate) fn get_inmail_state(inmail_address: &Address) -> ZomeApiResult<InMailState> {
+    // 1. Should have InMail
+    let maybe_inmail = hdk::utils::get_as_type::<InMail>(inmail_address.clone());
+    if let Err(_) = maybe_inmail {
+        return Err(ZomeApiError::Internal("No InMail at given address".to_string()));
+    }
+    // 2. Get OutAck
+    let links_result = hdk::get_links(&inmail_address,LinkMatch::Exactly(link_kind::Acknowledgment), LinkMatch::Any)?;
+    if links_result.links().len() < 1 {
+        return Ok(InMailState::Arrived);
+    }
+    let ack_link = links_result.links()[0].clone();
+    // 3. Get PendingAck
+    let links_result = hdk::get_links(&ack_link.address,LinkMatch::Exactly(link_kind::Pending), LinkMatch::Any)?;
+    // If link found, it means Ack has not been received
+    if links_result.links().len() > 0 {
+        return Ok(InMailState::Acknowledged);
+    }
+    Ok(InMailState::AckReceived)
+}
 
 /// Conditions: Must be a single author entry type
 pub(crate) fn get_entry_and_author(address: &Address) -> ZomeApiResult<(AgentAddress, Entry)> {

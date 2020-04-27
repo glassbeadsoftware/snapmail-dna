@@ -14,6 +14,7 @@ use crate::{
     // link_kind,
     entry_kind,
     mail::entries::{*, self},
+    mail::utils::{get_inmail_state, get_outmail_state},
 };
 
 /// Zome Function
@@ -41,18 +42,21 @@ pub fn get_all_mails() -> ZomeApiResult<Vec<MailItem>> {
         let item = match entry {
             Entry::App(_, entry_value) => {
                 if let Ok(inmail) = entries::InMail::try_from(entry_value.clone()) {
+                    let state = MailState::In(get_inmail_state(header.entry_address()).expect("should be valid entry"));
                     let item = MailItem {
                         mail: inmail.mail,
-                        state: MailState::In(InMailState::Arrived), // FIXME
+                        state,
                         bcc: Vec::new(),
                         date,
                     };
                     item
                 } else {
                     let outmail = entries::OutMail::try_from(entry_value).expect("Could not convert entry to requested type");
+                    let state = MailState::Out(get_outmail_state(header.entry_address()).expect("should be valid entry"));
+
                     let item = MailItem {
                         mail: outmail.mail,
-                        state: MailState::Out(OutMailState::Arrived_NoAcknowledgement), // FIXME
+                        state,
                         bcc: outmail.bcc.clone(),
                         date,
                     };
