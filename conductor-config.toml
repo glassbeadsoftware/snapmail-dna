@@ -3,14 +3,14 @@ persistence_dir = ''
 
 [[agents]]
 id = 'hc-run-agent'
-keystore_file = 'testAgent'
-name = 'testAgent'
-public_address = 'HcScjN8wBwrn3tuyg89aab3a69xsIgdzmX5P9537BqQZ5A7TEZu7qCY4Xzzjhma'
+keystore_file = 'Alice'
+name = 'Alice'
+public_address = 'HcSciaDXrXkqxwv7gukMChvazIuscvcrk457t8n88cmo95en4sPCEdDKvj4ucja'
 test_agent = true
 
 [[dnas]]
 file = 'dist/snapmail-dna.dna.json'
-hash = 'QmSnrTeSw3HzHaVMkv1yRGtZ5yzwL4Z7EbEJKNgq9iHj18'
+hash = 'QmS89FqbwuzE5koJjpd5pc8NsuuNyGynxdp7PxQYa8tFx3'
 id = '__snapmail'
 
 [[instances]]
@@ -52,6 +52,10 @@ type = 'debug'
 
 [logger.rules]
 rules = []
+
+[network]
+sim2h_url = 'ws://localhost:9000'
+type = 'sim2h'
 
 [passphrase_service]
 type = 'cmd'

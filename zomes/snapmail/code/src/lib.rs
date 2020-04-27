@@ -42,8 +42,6 @@ use mail::entries::*;
 
 pub type AgentAddress = Address;
 
-// see https://developer.holochain.org/api/0.0.42-alpha5/hdk/ for info on using the hdk library
-
 #[zome]
 mod snapmail {
 

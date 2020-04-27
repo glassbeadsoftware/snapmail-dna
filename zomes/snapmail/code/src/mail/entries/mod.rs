@@ -14,14 +14,6 @@ pub use self::{
 
 use crate::AgentAddress;
 
-// #[allow(dead_code)]
-// pub enum OutMailState {
-//     CREATED,    // OutMail written
-//     SENT,       // PendingMail created and/or Some receipts have been received
-//     RECEIVED,   // All receipts have been received, no more PendingMail
-// }
-//
-
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone, PartialEq)]
 pub enum InMailState {
     // PendingMail available
@@ -59,6 +51,7 @@ pub enum MailState {
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct MailItem {
+    pub author: AgentAddress,
     pub mail: Mail,
     pub state: MailState,
     pub bcc: Vec<AgentAddress>,
