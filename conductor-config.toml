@@ -3,9 +3,9 @@ persistence_dir = ''
 
 [[agents]]
 id = 'hc-run-agent'
-keystore_file = 'testAgent'
-name = 'testAgent'
-public_address = 'HcScjN8wBwrn3tuyg89aab3a69xsIgdzmX5P9537BqQZ5A7TEZu7qCY4Xzzjhma'
+keystore_file = 'Alice'
+name = 'Alice'
+public_address = 'HcSciaDXrXkqxwv7gukMChvazIuscvcrk457t8n88cmo95en4sPCEdDKvj4ucja'
 test_agent = true
 
 [[dnas]]
@@ -52,6 +52,10 @@ type = 'debug'
 
 [logger.rules]
 rules = []
+
+[network]
+sim2h_url = 'ws://sim2h.harris-braun.com:9047'
+type = 'sim2h'
 
 [passphrase_service]
 type = 'cmd'
