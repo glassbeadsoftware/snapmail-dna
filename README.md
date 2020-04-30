@@ -25,3 +25,6 @@ nix-shell --run snapmail-test
 ## Running
 
 FIXME
+```
+hc run
+```
