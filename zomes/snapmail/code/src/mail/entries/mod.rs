@@ -51,6 +51,7 @@ pub enum MailState {
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct MailItem {
+    pub address: Address,
     pub author: AgentAddress,
     pub mail: Mail,
     pub state: MailState,

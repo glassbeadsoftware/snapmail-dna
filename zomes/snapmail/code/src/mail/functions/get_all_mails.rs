@@ -44,6 +44,7 @@ pub fn get_all_mails() -> ZomeApiResult<Vec<MailItem>> {
                 if let Ok(inmail) = entries::InMail::try_from(entry_value.clone()) {
                     let state = MailState::In(get_inmail_state(header.entry_address()).expect("should be valid entry"));
                     let item = MailItem {
+                        address: header.entry_address().clone(),
                         author: inmail.from,
                         mail: inmail.mail,
                         state,
@@ -56,6 +57,7 @@ pub fn get_all_mails() -> ZomeApiResult<Vec<MailItem>> {
                     let state = MailState::Out(get_outmail_state(header.entry_address()).expect("should be valid entry"));
 
                     let item = MailItem {
+                        address: header.entry_address().clone(),
                         author: (*hdk::AGENT_ADDRESS).clone(),
                         mail: outmail.mail,
                         state,

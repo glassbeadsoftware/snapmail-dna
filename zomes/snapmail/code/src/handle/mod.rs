@@ -35,6 +35,7 @@ pub fn handle_def() -> ValidatingEntryType {
         },
         validation: | _validation_data: hdk::EntryValidationData<Handle>| {
             // FIXME
+            // FIXME: min & max character count
             Ok(())
         },
             links: [
@@ -121,6 +122,30 @@ pub fn get_handle_entry(agentId: &AgentAddress) -> Option<(Address, Entry)> {
     return None;
 }
 
+// pub fn get_handle_entry(agentId: &AgentAddress) -> Option<(Address, Entry)> {
+//     get_handle_entry_by_agent(agentId)
+// }
+
+/// Return (handle entry address, handle entry) pair
+pub fn _get_handle_entry_by_agent(agentId: &AgentAddress) -> Option<(Address, Entry)> {
+    let link_results = hdk::get_links(
+        agentId,
+        LinkMatch::Exactly(link_kind::Handle),
+        LinkMatch::Any,
+    ).expect("No reason for this to fail");
+    let links_result = link_results.links();
+    assert!(links_result.len() <= 1);
+    if links_result.len() == 0 {
+        hdk::debug("No handle found for this agent:").ok();
+        return None;
+    }
+    let entry_address = &links_result[0].address;
+    let entry = hdk::get_entry(entry_address)
+        .expect("No reason for get_entry to crash")
+        .expect("Should have it");
+    return Some((entry_address.clone(), entry));
+}
+
 /// Zome Function
 /// get this agent's latest handle
 pub fn get_my_handle() -> ZomeApiResult<String> {
@@ -180,15 +205,6 @@ pub fn set_handle(name: String) -> ZomeApiResult<Address> {
     let _ = hdk::link_entries(/*&*hdk::DNA_ADDRESS*/ &dna_address, &entry_address, link_kind::Members, "")?;
     return Ok(entry_address);
 }
-
-
-/// Ask an online agent its handle.
-/// Return (username, handle entry address) pair
-pub fn _get_handle_by_dm() -> Option<(String, Address)> {
-    // FIXME
-    return None;
-}
-
 
 /// Get all known users
 /// Return (AgentId -> Handle entry address) Map
