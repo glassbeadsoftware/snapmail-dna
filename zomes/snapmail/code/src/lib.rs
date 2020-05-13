@@ -126,6 +126,11 @@ mod snapmail {
         handle::get_all_handles()
     }
 
+    #[zome_fn("hc_public")]
+    fn find_agent(handle: String) -> ZomeApiResult<Vec<AgentAddress>> {
+        handle::find_agent(handle)
+    }
+
     /// Send mail to all receipients
     /// Returns Map of PendingMail entry per receipient
     /// Conditions: Mail must have at least one receipient
