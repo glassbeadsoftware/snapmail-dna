@@ -31,6 +31,9 @@ pub fn receive(from: Address, msg_json: JsonString) -> String {
         DirectMessageProtocol::Ack(ack) => {
             mail::receive_direct_ack(from, ack)
         }
+        DirectMessageProtocol::Ping => {
+            DirectMessageProtocol::Success(String::new())
+        }
         _ => {
             let response = DirectMessageProtocol::Failure("Unexpected protocol".to_owned());
             return serde_json::to_string(&response).expect("Should stringify");

@@ -131,6 +131,12 @@ mod snapmail {
         handle::find_agent(handle)
     }
 
+    #[zome_fn("hc_public")]
+    fn ping_agent(agentId: String) -> ZomeApiResult<bool> {
+        handle::ping_agent(agentId.into())
+    }
+
+
     /// Send mail to all receipients
     /// Returns Map of PendingMail entry per receipient
     /// Conditions: Mail must have at least one receipient

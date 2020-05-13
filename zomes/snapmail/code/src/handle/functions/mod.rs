@@ -3,6 +3,7 @@ mod get_all_handles;
 mod get_my_handle;
 mod set_handle;
 mod find_agent;
+mod ping_agent;
 
 pub use self::{
     get_all_handles::*,
@@ -10,4 +11,5 @@ pub use self::{
     get_my_handle::*,
     set_handle::*,
     find_agent::*,
+    ping_agent::*,
 };

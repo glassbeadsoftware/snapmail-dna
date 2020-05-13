@@ -9,6 +9,7 @@ pub enum DirectMessageProtocol {
     Ack(AckMessage),
     Failure(String),
     Success(String),
+    Ping,
 }
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
