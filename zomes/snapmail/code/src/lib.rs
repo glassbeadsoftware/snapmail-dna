@@ -160,6 +160,13 @@ mod snapmail {
         mail::get_mail(address)
     }
 
+    /// Get an InMail or OutMail at given address.
+    #[zome_fn("hc_public")]
+    fn delete_mail(address: Address) -> ZomeApiResult<Address> {
+        mail::delete_mail(address)
+    }
+
+
     /// Get all InMails and OutMails
     #[zome_fn("hc_public")]
     fn get_all_mails() -> ZomeApiResult<Vec<MailItem>> { mail::get_all_mails() }
