@@ -24,6 +24,8 @@ pub enum InMailState {
     Acknowledged,
     // OutAck written, no PendingAck
     AckReceived,
+    //
+    Deleted,
 }
 
 
@@ -41,6 +43,8 @@ pub enum OutMailState {
     Arrived_PartiallyAcknowledged,
     // Has no pendings links, and a receipt link for each receipient
     Received,
+    //
+    Deleted,
 }
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone, PartialEq)]

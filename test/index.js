@@ -53,34 +53,34 @@ const conductorConfig = Config.gen(
     }
     )
 
-orchestrator.registerScenario("test get/set handle", async (s, t) => {
-  const {alex, billy} = await s.players({alex: conductorConfig, billy: conductorConfig}, true)
-  const name = "alex"
-  const params = { name }
-  const handle_address = await alex.call("myInstanceName", "snapmail", "set_handle", params)
-  console.log('handle_address: ' + JSON.stringify(handle_address))
-  t.match(handle_address.Ok, RegExp('Qm*'))
-
-  // Wait for all network activity to settle
-  await s.consistency()
-
-  const result = await alex.call("myInstanceName", "snapmail", "get_my_handle", {})
-    console.log('result1: ' + JSON.stringify(result))
-  t.deepEqual(result.Ok, name)
-
-  const agentId = alex.info('myInstanceName').agentAddress
-  const params2 = { agentId }
-  const result2 = await alex.call("myInstanceName", "snapmail", "get_handle", params2)
-  t.deepEqual(result2.Ok, name)
-
-  const result3 = await billy.call("myInstanceName", "snapmail", "get_handle", params2)
-  t.deepEqual(result3.Ok, name)
-
-    // -- Pings -- //
-
-    const result4 = await billy.call("myInstanceName", "snapmail", "ping_agent", params2)
-    t.deepEqual(result4.Ok, true)
-})
+// orchestrator.registerScenario("test get/set handle", async (s, t) => {
+//   const {alex, billy} = await s.players({alex: conductorConfig, billy: conductorConfig}, true)
+//   const name = "alex"
+//   const params = { name }
+//   const handle_address = await alex.call("myInstanceName", "snapmail", "set_handle", params)
+//   console.log('handle_address: ' + JSON.stringify(handle_address))
+//   t.match(handle_address.Ok, RegExp('Qm*'))
+//
+//   // Wait for all network activity to settle
+//   await s.consistency()
+//
+//   const result = await alex.call("myInstanceName", "snapmail", "get_my_handle", {})
+//     console.log('result1: ' + JSON.stringify(result))
+//   t.deepEqual(result.Ok, name)
+//
+//   const agentId = alex.info('myInstanceName').agentAddress
+//   const params2 = { agentId }
+//   const result2 = await alex.call("myInstanceName", "snapmail", "get_handle", params2)
+//   t.deepEqual(result2.Ok, name)
+//
+//   const result3 = await billy.call("myInstanceName", "snapmail", "get_handle", params2)
+//   t.deepEqual(result3.Ok, name)
+//
+//     // -- Ping -- //
+//
+//     const result4 = await billy.call("myInstanceName", "snapmail", "ping_agent", params2)
+//     t.deepEqual(result4.Ok, true)
+// })
 
 //
 // orchestrator.registerScenario("update handle", async (s, t) => {
@@ -337,56 +337,146 @@ orchestrator.registerScenario("test get/set handle", async (s, t) => {
 //   console.log('ack_result2 : ' + JSON.stringify(ack_result2))
 //   t.deepEqual(ack_result2.Ok, true)
 // })
+
 //
-// //
-// orchestrator.registerScenario("get all mails test", async (s, t) => {
-//
-//   const {alex, billy} = await s.players({alex: conductorConfig, billy: conductorConfig}, true)
-//
-//   // Send mail DM
-//   let send_params = {
-//       subject: "inmail 1",
-//       payload: "aaaaaaaa",
-//       to: [alex.info('myInstanceName').agentAddress],
-//       cc: [],
-//       bcc: []
-//   }
-//   let send_result = await billy.call("myInstanceName", "snapmail", "send_mail", send_params)
-//   console.log('send_result1: ' + JSON.stringify(send_result.Ok))
-//   t.deepEqual(send_result.Ok.to_pendings, {})
-//   await s.consistency()
-//
-//   // Send mail DM
-//   send_params = {
-//     subject: "inmail 2",
-//     payload: "bbbb",
-//     to: [alex.info('myInstanceName').agentAddress],
-//     cc: [],
-//     bcc: []
-//   }
-//   send_result = await billy.call("myInstanceName", "snapmail", "send_mail", send_params)
-//   console.log('send_result2: ' + JSON.stringify(send_result.Ok))
-//   t.deepEqual(send_result.Ok.to_pendings, {})
-//   await s.consistency()
-//
-//   // Send mail DM
-//   send_params = {
-//     subject: "outmail 3",
-//     payload: "ccccccc",
-//     to: [billy.info('myInstanceName').agentAddress],
-//     cc: [],
-//     bcc: []
-//   }
-//   send_result = await alex.call("myInstanceName", "snapmail", "send_mail", send_params)
-//   console.log('send_result3: ' + JSON.stringify(send_result.Ok))
-//   t.deepEqual(send_result.Ok.to_pendings, {})
-//   await s.consistency()
-//
-//   // Get all mails
-//   const mail_list_result = await alex.call("myInstanceName", "snapmail", "get_all_mails", {})
-//   console.log('mail_list_result : ' + JSON.stringify(mail_list_result))
-//   t.deepEqual(mail_list_result.Ok.length, 3)
-//   t.deepEqual(mail_list_result.Ok[0].mail.payload, send_params.payload)
-// })
+orchestrator.registerScenario("get all mails test", async (s, t) => {
+
+  const {alex, billy} = await s.players({alex: conductorConfig, billy: conductorConfig}, true)
+
+  // Send mail DM
+  let send_params = {
+      subject: "inmail 1",
+      payload: "aaaaaaaa",
+      to: [alex.info('myInstanceName').agentAddress],
+      cc: [],
+      bcc: []
+  }
+  const inMail1Payload = send_params.payload;
+
+  let send_result = await billy.call("myInstanceName", "snapmail", "send_mail", send_params)
+  console.log('send_result1: ' + JSON.stringify(send_result.Ok))
+  t.deepEqual(send_result.Ok.to_pendings, {})
+  await s.consistency()
+
+  // Send mail DM
+  send_params = {
+    subject: "inmail 2",
+    payload: "bbbb",
+    to: [alex.info('myInstanceName').agentAddress],
+    cc: [],
+    bcc: []
+  }
+  send_result = await billy.call("myInstanceName", "snapmail", "send_mail", send_params)
+  console.log('send_result2: ' + JSON.stringify(send_result.Ok))
+  t.deepEqual(send_result.Ok.to_pendings, {})
+  const inMail2 = send_result.Ok.outmail;
+  await s.consistency()
+
+  // Send mail DM
+  send_params = {
+    subject: "outmail 3",
+    payload: "ccccccc",
+    to: [billy.info('myInstanceName').agentAddress],
+    cc: [],
+    bcc: []
+  }
+  send_result = await alex.call("myInstanceName", "snapmail", "send_mail", send_params)
+  console.log('send_result3: ' + JSON.stringify(send_result.Ok))
+  t.deepEqual(send_result.Ok.to_pendings, {})
+  await s.consistency()
+
+  // Get all mails
+  let mail_list_result = await alex.call("myInstanceName", "snapmail", "get_all_mails", {})
+  console.log('mail_list_result1 : ' + JSON.stringify(mail_list_result))
+  t.deepEqual(mail_list_result.Ok.length, 3)
+  t.deepEqual(mail_list_result.Ok[0].mail.payload, send_params.payload)
+
+  mail_list_result = await billy.call("myInstanceName", "snapmail", "get_all_mails", {})
+  console.log('mail_list_result12 : ' + JSON.stringify(mail_list_result))
+  t.deepEqual(mail_list_result.Ok.length, 3)
+  t.deepEqual(mail_list_result.Ok[0].mail.payload, send_params.payload)
+  const outMail3 = mail_list_result.Ok[0].address;
+  console.log('outMail3 : ' + outMail3)
+
+  // -- delete outmail --//
+
+  send_result = await billy.call("myInstanceName", "snapmail", "delete_mail", {address: inMail2})
+  console.log('send_result4: ' + JSON.stringify(send_result.Ok))
+  t.match(send_result.Ok, RegExp('Qm*'))
+  await s.consistency()
+
+  // Get mail should fail
+  let mail_result = await billy.call("myInstanceName", "snapmail", "get_mail", {"address": inMail2})
+  console.log('mail_result : ' + JSON.stringify(mail_result))
+  t.deepEqual(mail_result, null)
+
+  // Get all mails
+  mail_list_result = await billy.call("myInstanceName", "snapmail", "get_all_mails", {})
+  console.log('mail_list_result2 : ' + JSON.stringify(mail_list_result))
+  let live_mail_list = filterMailList(mail_list_result.Ok);
+  t.deepEqual(live_mail_list.length, 2)
+  t.deepEqual(live_mail_list[0].mail.payload, send_params.payload)
+
+  // delete same mail twice should fail
+  send_result = await billy.call("myInstanceName", "snapmail", "delete_mail", {address: inMail2})
+  console.log('send_result5: ' + JSON.stringify(send_result))
+  t.deepEqual(send_result.Err, {Internal: "Entry Could Not Be Found"})
+
+  // Get all mails - Alex should still see 3
+  mail_list_result = await alex.call("myInstanceName", "snapmail", "get_all_mails", {})
+  console.log('mail_list_result3 : ' + JSON.stringify(mail_list_result))
+  live_mail_list = filterMailList(mail_list_result.Ok);
+  t.deepEqual(live_mail_list.length, 3)
+  t.deepEqual(live_mail_list[0].mail.payload, send_params.payload)
+
+  // -- delete inmail --//
+
+  send_result = await billy.call("myInstanceName", "snapmail", "delete_mail", {address: outMail3})
+  console.log('send_result6: ' + JSON.stringify(send_result.Ok))
+  t.match(send_result.Ok, RegExp('Qm*'))
+  await s.consistency()
+
+  // Get mail should fail
+  mail_result = await billy.call("myInstanceName", "snapmail", "get_mail", {"address": outMail3})
+  console.log('mail_result2 : ' + JSON.stringify(mail_result))
+  t.deepEqual(mail_result, null)
+
+  // Get all mails
+  mail_list_result = await billy.call("myInstanceName", "snapmail", "get_all_mails", {})
+  console.log('mail_list_result4 : ' + JSON.stringify(mail_list_result))
+  live_mail_list = filterMailList(mail_list_result.Ok);
+  t.deepEqual(live_mail_list.length, 1)
+  t.deepEqual(live_mail_list[0].mail.payload, inMail1Payload)
+
+  // delete same mail twice should fail
+  send_result = await billy.call("myInstanceName", "snapmail", "delete_mail", {address: outMail3})
+  console.log('send_result7: ' + JSON.stringify(send_result))
+  t.deepEqual(send_result.Err, {Internal: "Entry Could Not Be Found"})
+
+  // Get all mails - Alex should still see 3
+  mail_list_result = await alex.call("myInstanceName", "snapmail", "get_all_mails", {})
+  console.log('mail_list_result3 : ' + JSON.stringify(mail_list_result))
+  live_mail_list = filterMailList(mail_list_result.Ok);
+  t.deepEqual(live_mail_list.length, 3)
+  t.deepEqual(live_mail_list[0].mail.payload, send_params.payload)
+})
+
+function filterMailList(mail_list) {
+  let new_list = [];
+  for (let mailItem of mail_list) {
+    if (mailItem.state.hasOwnProperty('In')) {
+      if (mailItem.state.In === 'Deleted') {
+        continue;
+      }
+    }
+    if (mailItem.state.hasOwnProperty('Out')) {
+      if (mailItem.state.Out === 'Deleted') {
+        continue;
+      }
+    }
+    new_list.push(mailItem);
+  }
+  return new_list;
+}
 
 orchestrator.run()

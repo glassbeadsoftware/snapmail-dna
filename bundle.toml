@@ -3,7 +3,7 @@ bridges = []
 [[instances]]
 name = "snapmail"
 id = "__snapmail"
-dna_hash = "QmeSACpz78J4dF2trset1bRhgt65HgiQj1Neo9F7HHrC1F"
+dna_hash = "QmW7AKyU8MoCdxzpxpT1AWX3cYAZyqsXM3NJ7VojNoh6i9"
 uri = "file:dist/snapmail-dna.dna.json"
 
 [[UIs]]

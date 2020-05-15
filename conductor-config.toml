@@ -10,7 +10,7 @@ test_agent = true
 
 [[dnas]]
 file = 'dist/snapmail-dna.dna.json'
-hash = 'QmVSrSFVsCo3mo6Go2cR39wCbUeZCWdHcQULb2PgV3mHaj'
+hash = 'QmW7AKyU8MoCdxzpxpT1AWX3cYAZyqsXM3NJ7VojNoh6i9'
 id = '__snapmail'
 
 [[instances]]

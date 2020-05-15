@@ -28,8 +28,13 @@ pub fn get_all_mails() -> ZomeApiResult<Vec<MailItem>> {
         headers: true,
         entries: true,
     };
-    let query_result = hdk::query_result(query_names, query_args)?;
-    hdk::debug(format!("query_result: {:?}", query_result)).ok();
+    let maybe_query_result = hdk::query_result(query_names, query_args);
+    if let Err(err) = maybe_query_result {
+        hdk::debug(format!(" get_all_mails query_result failed: {:?}", err)).ok();
+        return Err(err);
+    }
+    let query_result = maybe_query_result.unwrap();
+    hdk::debug(format!(" get_all_mails query_result: {:?}", query_result)).ok();
     let mail_list = match query_result {
         QueryResult::HeadersWithEntries(list) => list,
         _ => panic!("Should be HeadersWithEntries"),
@@ -38,11 +43,17 @@ pub fn get_all_mails() -> ZomeApiResult<Vec<MailItem>> {
     // For each mail
     let mut item_list = Vec::new();
     for (header, entry) in &mail_list {
+        hdk::debug(format!(" mail_list header =  {:?}", header)).ok();
         let date: i64 = DateTime::from(header.timestamp().clone()).timestamp_millis();
         let item = match entry {
             Entry::App(_, entry_value) => {
                 if let Ok(inmail) = entries::InMail::try_from(entry_value.clone()) {
-                    let state = MailState::In(get_inmail_state(header.entry_address()).expect("should be valid entry"));
+                    let maybe_state = get_inmail_state(header.entry_address());
+                    if let Err(_err) = maybe_state {
+                        // deleted entry?
+                        continue;
+                    }
+                    let state = MailState::In(maybe_state.unwrap());
                     let item = MailItem {
                         address: header.entry_address().clone(),
                         author: inmail.from,
@@ -54,8 +65,12 @@ pub fn get_all_mails() -> ZomeApiResult<Vec<MailItem>> {
                     item
                 } else {
                     let outmail = entries::OutMail::try_from(entry_value).expect("Could not convert entry to requested type");
-                    let state = MailState::Out(get_outmail_state(header.entry_address()).expect("should be valid entry"));
-
+                    let maybe_state = get_outmail_state(header.entry_address());
+                    if let Err(_err) = maybe_state {
+                        // deleted entry?
+                        continue;
+                    }
+                    let state = MailState::Out(maybe_state.unwrap());
                     let item = MailItem {
                         address: header.entry_address().clone(),
                         author: (*hdk::AGENT_ADDRESS).clone(),
@@ -67,10 +82,14 @@ pub fn get_all_mails() -> ZomeApiResult<Vec<MailItem>> {
                     item
                 }
             },
-            _ => panic!("Should be a mail Entry"),
+            _ => {
+                hdk::debug("Should be a mail Entry").ok();
+                panic!("Should be a mail Entry")
+            },
         };
         // Add item to list
         item_list.push(item.clone());
     }
+    hdk::debug(format!(" get_all_mails size = {}", item_list.len())).ok();
     Ok(item_list)
 }

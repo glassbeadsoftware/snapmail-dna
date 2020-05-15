@@ -1,7 +1,10 @@
 // use hdk::prelude::*;
 
 use hdk::{
-    error::{ZomeApiResult, ZomeApiError},
+    error::{
+        ZomeApiResult,
+    //    ZomeApiError,
+    },
     holochain_persistence_api::{
     cas::content::Address
 }, holochain_core_types::{
@@ -22,11 +25,13 @@ use crate::{
 };
 
 /// Get State of InMail at given address
+/// If get_entry() returns nothing we presume the entry has been deleted
 pub(crate) fn get_outmail_state(outmail_address: &Address) -> ZomeApiResult<OutMailState> {
     // 1. Get OutMail
     let maybe_outmail = hdk::utils::get_as_type::<OutMail>(outmail_address.clone());
     if let Err(_) = maybe_outmail {
-        return Err(ZomeApiError::Internal("No OutMail at given address".to_string()));
+        // return Err(ZomeApiError::Internal("No OutMail at given address".to_string()));
+        return Ok(OutMailState::Deleted);
     }
     let outmail = maybe_outmail.unwrap();
     let receipient_count = outmail.bcc.len() + outmail.mail.to.len() + outmail.mail.cc.len();
@@ -54,11 +59,13 @@ pub(crate) fn get_outmail_state(outmail_address: &Address) -> ZomeApiResult<OutM
 }
 
 /// Get State of InMail at given address
+/// If get_entry() returns nothing we presume the entry has been deleted
 pub(crate) fn get_inmail_state(inmail_address: &Address) -> ZomeApiResult<InMailState> {
     // 1. Should have InMail
     let maybe_inmail = hdk::utils::get_as_type::<InMail>(inmail_address.clone());
     if let Err(_) = maybe_inmail {
-        return Err(ZomeApiError::Internal("No InMail at given address".to_string()));
+        return Ok(InMailState::Deleted);
+        // return Err(ZomeApiError::Internal("No InMail at given address".to_string()));
     }
     // 2. Get OutAck
     let links_result = hdk::get_links(&inmail_address,LinkMatch::Exactly(link_kind::Acknowledgment), LinkMatch::Any)?;
