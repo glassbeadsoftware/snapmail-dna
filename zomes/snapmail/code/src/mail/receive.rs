@@ -7,16 +7,13 @@ use hdk::{
         cas::content::Address
     },
 };
-use crate::{
-    entry_kind,
-    mail::{
-        self,
-        entries::InMail,
-    },
-    AgentAddress, DirectMessageProtocol, MailMessage, AckMessage,
-    ReceivedMail, ReceivedAck,
-};
+use crate::{entry_kind, signal_protocol::*, mail::{
+    self,
+    entries::{InMail, MailItem, MailState},
+}, AgentAddress, DirectMessageProtocol, MailMessage, AckMessage, ReceivedAck, snapmail_now};
 use std::convert::TryInto;
+use crate::mail::entries::InMailState;
+
 
 pub fn receive(from: Address, msg_json: JsonString) -> String {
     hdk::debug(format!("Received from: {:?}", from)).ok();
@@ -57,13 +54,19 @@ pub fn receive_direct_mail(from: AgentAddress, mail_msg: MailMessage) -> DirectM
         hdk::debug(format!("{}: {}", response_str, err)).ok();
         return DirectMessageProtocol::Failure(response_str.to_string());
     }
-    hdk::debug(format!("inmail_address: {}", maybe_inmail_address.unwrap())).ok();
+    let inmail_address =  maybe_inmail_address.unwrap();
+    hdk::debug(format!("inmail_address: {}", inmail_address)).ok();
 
     // Emit signal
-    let signal = ReceivedMail {
-        from: from.clone(),
+    let item = MailItem {
+        address: inmail_address,
+        author: from.clone(),
         mail: mail_msg.mail.clone(),
+        state: MailState::In(InMailState::Arrived),
+        bcc: Vec::new(),
+        date: snapmail_now() as i64, // FIXME
     };
+    let signal = SignalProtocol::ReceivedMail(item);
     let signal_json = serde_json::to_string(&signal).expect("Should stringify");
     let res = hdk::emit_signal("received_mail", JsonString::from_json(&signal_json));
     if let Err(err) = res {
@@ -85,10 +88,10 @@ pub fn receive_direct_ack(from: AgentAddress, ack_msg: AckMessage) -> DirectMess
         return DirectMessageProtocol::Failure(response_str.to_string());
     }
     // Emit Signal
-    let signal = ReceivedAck {
+    let signal = SignalProtocol::ReceivedAck(ReceivedAck {
         from: from.clone(),
         for_mail: ack_msg.outmail_address.clone(),
-    };
+    });
     let signal_json = serde_json::to_string(&signal).expect("Should stringify");
     let res = hdk::emit_signal("received_ack", JsonString::from_json(&signal_json));
     if let Err(err) = res {
