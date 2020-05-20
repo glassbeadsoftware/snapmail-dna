@@ -3,13 +3,13 @@ persistence_dir = ''
 
 [[agents]]
 id = 'hc-run-agent'
-keystore_file = 'testAgent'
-name = 'testAgent'
-public_address = 'HcScjN8wBwrn3tuyg89aab3a69xsIgdzmX5P9537BqQZ5A7TEZu7qCY4Xzzjhma'
+keystore_file = 'Alice'
+name = 'Alice'
+public_address = 'HcSciaDXrXkqxwv7gukMChvazIuscvcrk457t8n88cmo95en4sPCEdDKvj4ucja'
 test_agent = true
 
 [[dnas]]
-file = 'dist/snapmail-dna.dna.json'
+file = './dist/snapmail-dna.dna.json'
 hash = 'QmVUGcceLHJm24BGRR6PFLe94XfgrQogddMBe1kwReg5Aq'
 id = '__snapmail'
 
@@ -36,7 +36,7 @@ type = 'websocket'
 
 [[ui_bundles]]
 id = 'snapmail_web_ui'
-root_dir = '../snapmail-ui/dist'
+root_dir = './../snapmail-ui/dist'
 
 [[ui_interfaces]]
 bind_address = '127.0.0.1'
@@ -52,6 +52,10 @@ type = 'debug'
 
 [logger.rules]
 rules = []
+
+[network]
+sim2h_url = 'public-v4.sim2h.net:9000'
+type = 'sim2h'
 
 [passphrase_service]
 type = 'cmd'
