@@ -6,3 +6,5 @@ pub const PendingMail: &'static str = "pending_mail";
 pub const PendingAck: &'static str = "pending_ack";
 pub const OutMail: &'static str = "outmail";
 pub const OutAck: &'static str = "outack";
+pub const File: &'static str = "file";
+pub const FileChunk: &'static str = "file_chunk";

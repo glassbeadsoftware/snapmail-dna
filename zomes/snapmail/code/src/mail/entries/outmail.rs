@@ -86,7 +86,7 @@ impl OutMail {
         assert_ne!(0, to.len() + cc.len() + bcc.len());
         // TODO: remove duplicate receipients
         let date_sent = crate::snapmail_now();
-        let mail = Mail { date_sent, subject, payload, to, cc };
+        let mail = Mail { date_sent, subject, payload, to, cc, attachments: Vec::new() };
         OutMail::new(mail, bcc)
     }
 }

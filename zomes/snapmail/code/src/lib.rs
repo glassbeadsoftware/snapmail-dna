@@ -8,6 +8,7 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate holochain_json_derive;
 
+mod file;
 mod mail;
 mod handle;
 mod utils;
@@ -102,6 +103,11 @@ mod snapmail {
     #[entry_def]
     fn inack_def() -> ValidatingEntryType {
         mail::entries::inack_def()
+    }
+
+    #[entry_def]
+    fn file_def() -> ValidatingEntryType {
+        file::file_def()
     }
 
     // -- Zome Functions -- //
@@ -211,5 +217,17 @@ mod snapmail {
     #[zome_fn("hc_public")]
     fn has_ack_been_received(inmail_address: Address) -> ZomeApiResult<bool> {
         mail::has_ack_been_received(inmail_address)
+    }
+
+    /// Add file to source chain
+    #[zome_fn("hc_public")]
+    fn write_file(data_string: String) -> ZomeApiResult<Address> {
+        file::write_file(data_string)
+    }
+
+    /// Get file at given address.
+    #[zome_fn("hc_public")]
+    pub fn get_file(address: Address) -> Option<String> {
+        file::get_file(address)
     }
 }

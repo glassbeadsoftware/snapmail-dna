@@ -8,3 +8,4 @@ pub const Pending: &'static str = "pending";
 pub const Pendings: &'static str = "pendings";
 //pub const Reply: &'static str = "reply";
 pub const Receipt: &'static str = "receipt";
+//pub const InitialChunks: &'static str = "initial_chunks";

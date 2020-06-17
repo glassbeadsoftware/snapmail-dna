@@ -80,4 +80,14 @@ pub struct Mail {
     pub payload: String,
     pub to: Vec<AgentAddress>,
     pub cc: Vec<AgentAddress>,
+    pub attachments: Vec<AttachmentInfo>,
+}
+
+/// Metadata for a mail attachment
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
+pub struct AttachmentInfo {
+    pub data_hash: Address,
+    pub filename: String,
+    pub filetype: String,
+    orig_filesize: u64,
 }

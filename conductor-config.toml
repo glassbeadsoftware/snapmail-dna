@@ -3,9 +3,9 @@ persistence_dir = ''
 
 [[agents]]
 id = 'hc-run-agent'
-keystore_file = 'Alice'
-name = 'Alice'
-public_address = 'HcSciaDXrXkqxwv7gukMChvazIuscvcrk457t8n88cmo95en4sPCEdDKvj4ucja'
+keystore_file = 'testAgent'
+name = 'testAgent'
+public_address = 'HcScjN8wBwrn3tuyg89aab3a69xsIgdzmX5P9537BqQZ5A7TEZu7qCY4Xzzjhma'
 test_agent = true
 
 [[dnas]]
@@ -52,10 +52,6 @@ type = 'debug'
 
 [logger.rules]
 rules = []
-
-[network]
-sim2h_url = 'public-v4.sim2h.net:9000'
-type = 'sim2h'
 
 [passphrase_service]
 type = 'cmd'
