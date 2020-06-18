@@ -71,7 +71,7 @@ const tracing = ({playerName}) => ({
     service_name: `holochain-${playerName}`
 })
 
-const commonConfig = { logger, network, tracing }
+const commonConfig = { logger, network/*, tracing*/ }
 
 module.exports = {
     conductorConfig: Config.gen({

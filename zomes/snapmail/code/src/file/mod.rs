@@ -31,11 +31,28 @@ pub fn file_def() -> ValidatingEntryType {
             validation_package: || {
                 hdk::ValidationPackageDefinition::Entry
             },
-            validation: | _validation_data: hdk::EntryValidationData<File>| {
-                // FIXME
-                Ok(())
+            validation: | validation_data: hdk::EntryValidationData<File>| {
+                validate_file(validation_data)
             }
         )
+}
+
+pub(crate) fn validate_file(validation_data: hdk::EntryValidationData<File>) -> Result<(), String> {
+    match validation_data {
+        EntryValidationData::Create{entry: file, validation_data: _} => {
+            // Check size
+            if file.full_data.len() > 500 * 1024 {
+                return Err("A file can't be bigger than 500 KiB".into());
+            }
+            return Ok(());
+        },
+        EntryValidationData::Modify{new_entry: _new_file, old_entry: _old_file, old_entry_header:_, validation_data: _} => {
+            return Err("A file can't be modified".into());
+        },
+        EntryValidationData::Delete{old_entry: _, old_entry_header: _, validation_data:_} => {
+            return Ok(());
+        }
+    }
 }
 
 impl File {
