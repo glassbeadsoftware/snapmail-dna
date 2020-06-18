@@ -1,4 +1,5 @@
 const { conductorConfig } = require('../config')
+const { filterMailList } = require('../utils')
 
 module.exports = scenario => {
 

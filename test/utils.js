@@ -24,3 +24,5 @@ function filterMailList(mail_list) {
     }
     return new_list;
 }
+
+module.exports = { sleep, filterMailList };
