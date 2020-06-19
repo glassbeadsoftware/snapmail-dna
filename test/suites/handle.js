@@ -1,6 +1,7 @@
 const { conductorConfig } = require('../config')
 
 module.exports = scenario => {
+
     scenario("test get/set handle", async (s, t) => {
         const {alex, billy} = await s.players({alex: conductorConfig, billy: conductorConfig}, true)
         const name = "alex"
@@ -30,7 +31,7 @@ module.exports = scenario => {
         t.deepEqual(result4.Ok, true)
     })
 
-
+    //
     scenario("update handle", async (s, t) => {
         const {alex} = await s.players({alex: conductorConfig}, true)
 
@@ -40,6 +41,7 @@ module.exports = scenario => {
         let handle_address = await alex.call("app", "snapmail", "set_handle", params)
         console.log('handle_address1: ' + JSON.stringify(handle_address))
         t.match(handle_address.Ok, RegExp('Qm*'))
+        let initial_handle_address = handle_address.Ok;
         await s.consistency()
         let result = await alex.call("app", "snapmail", "get_my_handle", {})
         t.deepEqual(result.Ok, name)
@@ -63,6 +65,13 @@ module.exports = scenario => {
         await s.consistency()
         result = await alex.call("app", "snapmail", "get_my_handle", {})
         t.deepEqual(result.Ok, name)
+
+        // Get history
+        let address = initial_handle_address
+        let params42 = { address }
+        let history_result = await alex.call("app", "snapmail", "get_my_handle_history", params42)
+        console.log('history_result: ' + JSON.stringify(history_result))
+        t.deepEqual(history_result.length, 3)
     })
 
     scenario("test handle list", async (s, t) => {

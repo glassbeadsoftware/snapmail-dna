@@ -132,6 +132,12 @@ mod snapmail {
         handle::get_all_handles()
     }
 
+    /// Get all my handles starting from address
+    #[zome_fn("hc_public")]
+    pub fn get_my_handle_history(address: String) -> Vec<String> {
+        handle::get_my_handle_history(address.into())
+    }
+
     #[zome_fn("hc_public")]
     fn find_agent(handle: String) -> ZomeApiResult<Vec<AgentAddress>> {
         handle::find_agent(handle)
