@@ -49,7 +49,7 @@ mod snapmail {
     // -- System -- //
 
     use crate::DirectMessageProtocol;
-
+    use crate::file::FileManifest;
 
     #[init]
     fn init() {
@@ -106,9 +106,15 @@ mod snapmail {
     }
 
     #[entry_def]
-    fn file_def() -> ValidatingEntryType {
-        file::file_def()
+    fn file_chunk_def() -> ValidatingEntryType {
+        file::file_chunk_def()
     }
+
+    #[entry_def]
+    fn file_manifest_def() -> ValidatingEntryType {
+        file::file_manifest_def()
+    }
+
 
     // -- Zome Functions -- //
 
@@ -231,29 +237,45 @@ mod snapmail {
         mail::has_ack_been_received(inmail_address)
     }
 
-    /// Add file to source chain
+    /// Add file chunk to source chain
     #[zome_fn("hc_public")]
-    fn write_initial_chunk(data_hash: String, chunk_total: usize, first_chunk: String) -> ZomeApiResult<Address> {
-        file::write_initial_chunk(data_hash.into(), chunk_total, first_chunk)
+    fn write_chunk(data_hash: String, chunk_index: usize, chunk: String) -> ZomeApiResult<Address> {
+        file::write_chunk(data_hash.into(), chunk_index, chunk)
     }
 
-    /// Add file to source chain
+    /// Get file chunk at given address.
     #[zome_fn("hc_public")]
-    fn write_chunk(data_hash: String, chunk: String, initial_address: String) -> ZomeApiResult<Address> {
-        file::write_chunk(data_hash.into(), chunk, initial_address.into())
+    fn get_chunk(chunk_address: String) -> ZomeApiResult<String> {
+        file::get_chunk(chunk_address.into())
     }
 
-        // fn write_file(data_string: String) -> ZomeApiResult<Address> {
-    //     file::write_file(data_string)
-    // }
-
-    /// Get file at given address.
+    /// Write file manifest to source chain
     #[zome_fn("hc_public")]
-    fn get_file(initial_address: Address, index: usize) -> ZomeApiResult<String> {
-        file::get_file(initial_address, index)
+    fn write_manifest(
+        data_hash: String,
+        filename: String,
+        filetype: String,
+        orig_filesize: u64,
+        chunks: Vec<Address>,
+    ) -> ZomeApiResult<Address> {
+        file::write_manifest(data_hash.into(), filename, filetype, orig_filesize, chunks)
     }
 
-    // pub fn get_file(address: Address) -> Option<String> {
-    //     file::get_file(address)
-    // }
+    /// Get manifest entry at given address
+    #[zome_fn("hc_public")]
+    fn get_manifest(manifest_address: Address) -> ZomeApiResult<FileManifest> {
+        file::get_manifest(manifest_address)
+    }
+
+    /// Get manifest entry at given address
+    #[zome_fn("hc_public")]
+    fn find_manifest(data_hash: String) -> ZomeApiResult<Option<FileManifest>> {
+        file::find_manifest(data_hash.into())
+    }
+
+    /// Get all manifests stored in our source chain
+    #[zome_fn("hc_public")]
+    fn get_all_manifests() -> ZomeApiResult<Vec<FileManifest>> {
+        file::get_all_manifests()
+    }
 }
