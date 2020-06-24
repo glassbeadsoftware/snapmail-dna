@@ -50,3 +50,11 @@ pub fn set_handle(name: String) -> ZomeApiResult<Address> {
     let _ = hdk::link_entries(/*&*hdk::DNA_ADDRESS*/ &dna_address, &entry_address, link_kind::Members, "")?;
     return Ok(entry_address);
 }
+
+/// Zome function for testing the update_entry() API function.
+pub fn set_three_handles(name1: String, name2: String, name3: String) -> ZomeApiResult<Address> {
+    let res = set_handle(name1)?;
+    set_handle(name2)?;
+    set_handle(name3)?;
+    Ok(res)
+}

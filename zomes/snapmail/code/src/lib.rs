@@ -132,6 +132,12 @@ mod snapmail {
         handle::get_all_handles()
     }
 
+    /// For testing only
+    #[zome_fn("hc_public")]
+    fn set_three_handles(name1: String, name2: String, name3: String) -> ZomeApiResult<Address> {
+        handle::set_three_handles(name1, name2, name3)
+    }
+
     /// Get all my handles starting from address
     #[zome_fn("hc_public")]
     pub fn get_my_handle_history(address: String) -> Vec<String> {
@@ -227,13 +233,27 @@ mod snapmail {
 
     /// Add file to source chain
     #[zome_fn("hc_public")]
-    fn write_file(data_string: String) -> ZomeApiResult<Address> {
-        file::write_file(data_string)
+    fn write_initial_chunk(data_hash: String, chunk_total: usize, first_chunk: String) -> ZomeApiResult<Address> {
+        file::write_initial_chunk(data_hash.into(), chunk_total, first_chunk)
     }
+
+    /// Add file to source chain
+    #[zome_fn("hc_public")]
+    fn write_chunk(data_hash: String, chunk: String, initial_address: String) -> ZomeApiResult<Address> {
+        file::write_chunk(data_hash.into(), chunk, initial_address.into())
+    }
+
+        // fn write_file(data_string: String) -> ZomeApiResult<Address> {
+    //     file::write_file(data_string)
+    // }
 
     /// Get file at given address.
     #[zome_fn("hc_public")]
-    pub fn get_file(address: Address) -> Option<String> {
-        file::get_file(address)
+    fn get_file(initial_address: Address, index: usize) -> ZomeApiResult<String> {
+        file::get_file(initial_address, index)
     }
+
+    // pub fn get_file(address: Address) -> Option<String> {
+    //     file::get_file(address)
+    // }
 }
