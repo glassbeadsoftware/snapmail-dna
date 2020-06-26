@@ -19,7 +19,10 @@ use crate::{
     protocol::{
         MailMessage, DirectMessageProtocol,
     },
+    file::{FileManifest, FileChunk},
 };
+use crate::file::get_manifest;
+
 
 #[allow(non_camel_case_types)]
 pub enum SendSuccessKind {
@@ -55,32 +58,153 @@ impl SendTotalResult {
     }
 }
 
-///
-fn send_mail_to(outmail_address: &Address, mail: &Mail, destination: &AgentAddress) -> ZomeApiResult<SendSuccessKind> {
-    // 1. First try sending directly to other Agent if Online
-    //   a. Create DM
+fn send_manifest_by_dm(
+    destination: &AgentAddress,
+    sender_manifest: &FileManifest,
+    chunk_address_list: Vec<Address>,
+) -> ZomeApiResult<Address> {
+    hdk::debug(format!("send_manifest_by_dm(): {:?}", destination)).ok();
+
+    // Create receiver manifest
+    let mut receiver_manifest = sender_manifest.clone();
+    receiver_manifest.chunks = chunk_address_list;
+    //   Create DM
+    let payload = serde_json::to_string(&DirectMessageProtocol::FileManifest(receiver_manifest)).unwrap();
+    //   Send DM
+    let result = hdk::send(
+        destination.clone(),
+        payload,
+        Timeout::new(crate::DIRECT_SEND_TIMEOUT_MS),
+    );
+    hdk::debug(format!("send_manifest result = {:?}", result)).ok();
+    //   Check Response
+    if let Err(_e) = result {
+        return Err(ZomeApiError::Internal("hdk::send() of manifest failed".into()))
+    }
+    let response = result.unwrap();
+    hdk::debug(format!("Received response: {:?}", response)).ok();
+    let maybe_msg: Result<DirectMessageProtocol, _> = serde_json::from_str(&response);
+    if let Err(_e) = maybe_msg {
+        return Err(ZomeApiError::Internal("hdk::send() of manifest failed 2".into()))
+    }
+    // Return manifest's entry address on receiver's source chain
+    match maybe_msg.unwrap() {
+        DirectMessageProtocol::Success(manifest_address) => Ok(manifest_address.into()),
+        _ => Err(ZomeApiError::Internal("hdk::send() of manifest failed 3".into())),
+    }
+}
+
+fn send_chunk_by_dm(destination: &AgentAddress, chunk_address: &Address) -> ZomeApiResult<Address> {
+    hdk::debug(format!("send_chunk_by_dm(): {}", chunk_address)).ok();
+    let maybe_entry = hdk::get_entry(&chunk_address)?;
+        //.expect("No reason for get_entry() to crash");
+    hdk::debug(format!("maybe_entry =  {:?}", maybe_entry)).ok();
+    if maybe_entry.is_none() {
+        return Err(ZomeApiError::Internal("No chunk found at given address".into()))
+    }
+    let chunk = crate::into_typed::<FileChunk>(maybe_entry.unwrap())?;
+
+    //   Create DM
+    let payload = serde_json::to_string(&DirectMessageProtocol::Chunk(chunk)).unwrap();
+    //   Send DM
+    let result = hdk::send(
+        destination.clone(),
+        payload,
+        Timeout::new(crate::DIRECT_SEND_CHUNK_TIMEOUT_MS),
+    );
+    hdk::debug(format!("send_chunk result = {:?}", result)).ok();
+    //   Check Response
+    if let Err(e) = result {
+        return Err(ZomeApiError::Internal(format!("hdk::send() of chunk failed: {}", e)));
+    }
+    let response = result.unwrap();
+    hdk::debug(format!("Received response: {:?}", response)).ok();
+    let maybe_msg: Result<DirectMessageProtocol, _> = serde_json::from_str(&response);
+    if let Err(_e) = maybe_msg {
+        return Err(ZomeApiError::Internal("hdk::send() of chunk failed 2".into()))
+    }
+    match maybe_msg.unwrap() {
+        DirectMessageProtocol::Success(chunk_address) => Ok(chunk_address.into()),
+        _ => Err(ZomeApiError::Internal("hdk::send() of chunk failed 3".into())),
+    }
+}
+
+fn send_attachment_by_dm(destination: &AgentAddress, manifest: &FileManifest) -> ZomeApiResult<Address> {
+    // Send each chunk and receive chunk entry address in return
+    let mut chunk_address_list: Vec<Address> = Vec::new();
+    for chunk_address in &manifest.chunks {
+        let receiver_chunk_address = send_chunk_by_dm(destination, chunk_address)?;
+        chunk_address_list.push(receiver_chunk_address);
+    }
+    // Create and Send FileManifest
+    return send_manifest_by_dm(destination, manifest, chunk_address_list);
+}
+
+
+fn send_mail_by_dm(
+    outmail_address: &Address,
+    mail: &Mail,
+    destination: &AgentAddress,
+    manifest_list: &Vec<FileManifest>,
+) -> ZomeApiResult<bool> {
+
+    // -- Send Attachments
+    hdk::debug("Send Attachments".to_string()).ok();
+    // For each attachment, send all the chunks
+    let mut manifest_address_list: Vec<Address> = Vec::new();
+    for manifest in manifest_list {
+        let maybe_manifest_address = send_attachment_by_dm(destination, manifest);
+        if let Err(e) = maybe_manifest_address {
+            let err_msg = format!("Send attachment failed -> Err: {}", e);
+            hdk::debug(err_msg.clone()).ok();
+            return Err(ZomeApiError::Internal(err_msg));
+        }
+        manifest_address_list.push(maybe_manifest_address.unwrap());
+    }
+
+    // --  Send Mail
+    hdk::debug("Send Mail".to_string()).ok();
+    // Create DM
     let msg = MailMessage {
         outmail_address: outmail_address.clone(),
         mail: mail.clone(),
+        manifest_address_list,
     };
     let payload = serde_json::to_string(&DirectMessageProtocol::Mail(msg)).unwrap();
-    //   b. Send DM
+    //   Send DM
     let result = hdk::send(
         destination.clone(),
         payload,
         Timeout::new(crate::DIRECT_SEND_TIMEOUT_MS),
     );
     hdk::debug(format!("send_mail_to() result = {:?}", result)).ok();
-    //   c. Check Response
+    //   Check Response
     if let Ok(response) = result {
         hdk::debug(format!("Received response: {:?}", response)).ok();
         let maybe_msg: Result<DirectMessageProtocol, _> = serde_json::from_str(&response);
         if let Ok(msg) = maybe_msg {
             if let DirectMessageProtocol::Success(_) = msg {
-                return Ok(SendSuccessKind::OK_DIRECT);
+                return Ok(true);
             }
         }
     };
+    Ok(false)
+}
+
+///
+fn send_mail_to(
+    outmail_address: &Address,
+    mail: &Mail,
+    destination: &AgentAddress,
+    manifest_list: &Vec<FileManifest>,
+) -> ZomeApiResult<SendSuccessKind> {
+
+    // 1. First try sending directly to other Agent if Online
+    let succeded = send_mail_by_dm(outmail_address, mail, destination, manifest_list)?;
+    if succeded {
+        return Ok(SendSuccessKind::OK_DIRECT);
+    }
+
     // 2. Direct Send failed, so send to DHT instead by creating a PendingMail
     // Get Handle address first
     let maybe_destination_handle_address = crate::handle::get_handle_entry(destination);
@@ -127,32 +251,48 @@ pub fn send_mail(
     to: Vec<AgentAddress>,
     cc: Vec<AgentAddress>,
     bcc: Vec<AgentAddress>,
+    manifest_address_list: Vec<Address>,
 ) -> ZomeApiResult<SendTotalResult> {
-    let outmail = OutMail::create(subject, payload, to.clone(), cc.clone(), bcc.clone());
+
+    // Get file manifests from addresses
+    let mut file_manifest_list = Vec::new();
+    for manifest_address in manifest_address_list.clone() {
+        let manifest = get_manifest(manifest_address)?;
+        file_manifest_list.push(manifest)
+    }
+
+    // Create and commit OutMail
+    let outmail = OutMail::create(
+        subject,
+        payload,
+        to.clone(),
+        cc.clone(),
+        bcc.clone(),
+        manifest_address_list.clone(),
+        file_manifest_list.clone(),
+    );
     let outmail_entry = Entry::App(entry_kind::OutMail.into(), outmail.clone().into());
     let outmail_address = hdk::commit_entry(&outmail_entry)?;
 
+    // Send to each recepient
     let mut total_result = SendTotalResult::new(outmail_address.clone());
-
     // to
     for agent in to {
-        let res = send_mail_to(&outmail_address, &outmail.mail, &agent);
+        let res = send_mail_to(&outmail_address, &outmail.mail, &agent, &file_manifest_list);
         if let Ok(SendSuccessKind::OK_PENDING(pending_address)) = res {
             total_result.add_pending(ReceipientKind::TO, &agent, pending_address);
         }
     }
-
     // cc
     for agent in cc {
-        let res = send_mail_to(&outmail_address, &outmail.mail, &agent);
+        let res = send_mail_to(&outmail_address, &outmail.mail, &agent, &file_manifest_list);
         if let Ok(SendSuccessKind::OK_PENDING(pending_address)) = res {
             total_result.add_pending(ReceipientKind::CC, &agent, pending_address);
         }
     }
-
     // bcc
     for agent in bcc {
-        let res = send_mail_to(&outmail_address, &outmail.mail, &agent);
+        let res = send_mail_to(&outmail_address, &outmail.mail, &agent, &file_manifest_list);
         if let Ok(SendSuccessKind::OK_PENDING(pending_address)) = res {
             total_result.add_pending(ReceipientKind::BCC, &agent, pending_address);
         }
@@ -160,6 +300,5 @@ pub fn send_mail(
 
     // Done
     hdk::debug(format!("total_result: {:?}", total_result)).ok();
-
     Ok(total_result)
 }

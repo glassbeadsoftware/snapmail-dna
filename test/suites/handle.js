@@ -32,7 +32,7 @@ module.exports = scenario => {
     // })
 
     scenario("test set 3 handles", async (s, t) => {
-        const {alex, billy} = await s.players({alex: conductorConfig, billy: conductorConfig}, true)
+        const {alex} = await s.players({alex: conductorConfig}, true)
 
         const name = "joe"
         const params0 = { name }

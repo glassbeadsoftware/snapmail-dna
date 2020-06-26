@@ -1,6 +1,7 @@
 const sjcl = require('sjcl')
 
-const CHUNK_MAX_SIZE = 500 * 1024;
+// const CHUNK_MAX_SIZE = 500 * 1024;
+const CHUNK_MAX_SIZE = 100 * 1024;
 
 function sleep(milliseconds) {
     const date = Date.now();

@@ -7,7 +7,9 @@ use hdk::{
         cas::content::Address
     },
 };
-use crate::{entry_kind, signal_protocol::*, mail::{
+use crate::{entry_kind, signal_protocol::*,
+            file::{FileChunk, FileManifest},
+            mail::{
     self,
     entries::{InMail, MailItem, MailState},
 }, AgentAddress, DirectMessageProtocol, MailMessage, AckMessage, ReceivedAck, snapmail_now};
@@ -22,6 +24,12 @@ pub fn receive(from: Address, msg_json: JsonString) -> String {
         return format!("error: {}", err);
     }
     let message = match maybe_msg.unwrap() {
+        DirectMessageProtocol::Chunk(chunk) => {
+            mail::receive_direct_chunk(from, chunk)
+        },
+        DirectMessageProtocol::FileManifest(manifest) => {
+            mail::receive_direct_manifest(from, manifest)
+        },
         DirectMessageProtocol::Mail(mail) => {
             mail::receive_direct_mail(from, mail)
         },
@@ -41,12 +49,56 @@ pub fn receive(from: Address, msg_json: JsonString) -> String {
 }
 
 
+/// Handle a FileManifestMessage.
+/// Emits `received_manifest` signal.
+/// Returns Success or Failure.
+pub fn receive_direct_manifest(from: AgentAddress, manifest: FileManifest) -> DirectMessageProtocol {
+    hdk::debug(format!("received manifest from: {}", from)).ok();
+    // FIXME: Check if already have file?
+    // Commit FileManifest
+    let manifest_entry = Entry::App(entry_kind::FileManifest.into(), manifest.into());
+    let maybe_address = hdk::commit_entry(&manifest_entry);
+    if let Err(err) = maybe_address {
+        let response_str = "Failed committing FileManifest";
+        hdk::debug(format!("{}: {}", response_str, err)).ok();
+        return DirectMessageProtocol::Failure(response_str.to_string());
+    }
+    let manifest_address = maybe_address.unwrap();
+    hdk::debug(format!("received manifest_address: {}", manifest_address)).ok();
+    // FIXME: emit signal
+    // Return Success response
+    return DirectMessageProtocol::Success(manifest_address.into());
+}
+
+
+/// Handle a ChunkMessage.
+/// Emits `received_chunk` signal.
+/// Returns Success or Failure.
+pub fn receive_direct_chunk(_from: AgentAddress, chunk: FileChunk) -> DirectMessageProtocol {
+    // FIXME: Check if already have chunk?
+    // Commit FileChunk
+    let chunk_entry = Entry::App(entry_kind::FileChunk.into(), chunk.into());
+    let maybe_address = hdk::commit_entry(&chunk_entry);
+    if let Err(err) = maybe_address {
+        let response_str = "Failed committing FileChunk";
+        hdk::debug(format!("{}: {}", response_str, err)).ok();
+        return DirectMessageProtocol::Failure(response_str.to_string());
+    }
+    let chunk_address = maybe_address.unwrap();
+    hdk::debug(format!("received chunk_address: {}",  chunk_address)).ok();
+    // FIXME: emit signal
+    // Return Success response
+    return DirectMessageProtocol::Success(chunk_address.into());
+}
+
+
 /// Handle a MailMessage.
 /// Emits `received_mail` signal.
 /// Returns Success or Failure.
 pub fn receive_direct_mail(from: AgentAddress, mail_msg: MailMessage) -> DirectMessageProtocol {
     // Create InMail
     let inmail = InMail::from_direct(from.clone(), mail_msg.clone());
+    // Commit InMail
     let inmail_entry = Entry::App(entry_kind::InMail.into(), inmail.into());
     let maybe_inmail_address = hdk::commit_entry(&inmail_entry);
     if let Err(err) = maybe_inmail_address {

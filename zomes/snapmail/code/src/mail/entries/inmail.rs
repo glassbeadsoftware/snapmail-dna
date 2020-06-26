@@ -23,6 +23,7 @@ pub struct InMail {
     pub from: AgentAddress,
     pub date_received: u64,
     pub outmail_address: Address,
+    pub manifest_address_list: Vec<Address>,
 }
 
 pub fn inmail_def() -> ValidatingEntryType {
@@ -58,18 +59,25 @@ pub fn inmail_def() -> ValidatingEntryType {
 //-------------------------------------------------------------------------------------------------
 
 impl InMail {
-    pub fn new(mail: Mail, from: AgentAddress, date_received: u64, outmail_address: Address) -> Self {
+    pub fn new(
+        mail: Mail,
+        from: AgentAddress,
+        date_received: u64,
+        outmail_address: Address,
+        manifest_address_list: Vec<Address>,
+    ) -> Self {
         Self {
             mail,
             from,
             date_received,
             outmail_address,
+            manifest_address_list,
         }
     }
 
     pub fn from_direct(from: AgentAddress, dm: MailMessage) -> Self {
         let received_date = crate::snapmail_now();
-        Self::new(dm.mail, from.clone(), received_date, dm.outmail_address)
+        Self::new(dm.mail, from.clone(), received_date, dm.outmail_address, dm.manifest_address_list)
     }
 
     pub fn from_pending(pending: PendingMail, from: AgentAddress) -> Self {
@@ -78,6 +86,6 @@ impl InMail {
 //            return ZomeApiError();
 //        }
         let received_date = crate::snapmail_now();
-        Self::new(pending.mail, from.clone(), received_date, pending.outmail_address)
+        Self::new(pending.mail, from.clone(), received_date, pending.outmail_address, Vec::new()) // FIXME
     }
 }

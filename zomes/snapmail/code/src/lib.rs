@@ -171,11 +171,12 @@ mod snapmail {
         to: Vec<AgentAddress>,
         cc: Vec<AgentAddress>,
         bcc: Vec<AgentAddress>,
+        manifest_address_list: Vec<Address>,
     ) -> ZomeApiResult<mail::SendTotalResult> {
         if to.len() + cc.len() + bcc.len() < 1 {
             return Err(ZomeApiError::Internal("Mail lacks receipients".into()))
         }
-        mail::send_mail(subject, payload, to, cc, bcc)
+        mail::send_mail(subject, payload, to, cc, bcc, manifest_address_list)
     }
 
     /// Get an InMail or OutMail at given address.

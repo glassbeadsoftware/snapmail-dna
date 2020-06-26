@@ -12,7 +12,10 @@ pub use self::{
     pending_ack::*, inack::*, outack::*,
 };
 
-use crate::AgentAddress;
+use crate::{
+    AgentAddress,
+    file::FileManifest,
+};
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone, PartialEq)]
 pub enum InMailState {
@@ -89,5 +92,16 @@ pub struct AttachmentInfo {
     pub data_hash: Address,
     pub filename: String,
     pub filetype: String,
-    orig_filesize: u64,
+    pub orig_filesize: u64,
+}
+
+impl From<FileManifest> for AttachmentInfo {
+    fn from(manifest: FileManifest) -> Self {
+        Self {
+            data_hash: manifest.data_hash.clone(),
+            filename: manifest.filename.clone(),
+            filetype: manifest.filetype.clone(),
+            orig_filesize: manifest.orig_filesize,
+        }
+    }
 }
