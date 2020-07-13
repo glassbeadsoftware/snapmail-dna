@@ -12,7 +12,7 @@ use crate::{
 
 
 // const CHUNK_MAX_SIZE: usize = 1024 * 500;
-const CHUNK_MAX_SIZE: usize = 500 * 1024;
+const CHUNK_MAX_SIZE: usize = 200 * 1024;
 
 //-------------------------------------------------------------------------------------------------
 // Definition
@@ -36,17 +36,17 @@ pub fn file_chunk_def() -> ValidatingEntryType {
                 hdk::ValidationPackageDefinition::Entry
             },
             validation: | validation_data: hdk::EntryValidationData<FileChunk>| {
-                validate_file(validation_data)
+                validate_chunk(validation_data)
             }
         )
 }
 
-pub(crate) fn validate_file(validation_data: hdk::EntryValidationData<FileChunk>) -> Result<(), String> {
+pub(crate) fn validate_chunk(validation_data: hdk::EntryValidationData<FileChunk>) -> Result<(), String> {
     match validation_data {
         EntryValidationData::Create{entry: file, validation_data: _} => {
             // Check size
             if file.chunk.len() > CHUNK_MAX_SIZE {
-                return Err("A file chunk can't be bigger than 500 KiB".into());
+                return Err(format!("A file chunk can't be bigger than {} KiB", CHUNK_MAX_SIZE / 1024));
             }
             return Ok(());
         },

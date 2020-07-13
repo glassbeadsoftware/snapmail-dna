@@ -92,7 +92,7 @@ pub struct AttachmentInfo {
     pub data_hash: Address,
     pub filename: String,
     pub filetype: String,
-    pub orig_filesize: u64,
+    pub orig_filesize: usize,
 }
 
 impl From<FileManifest> for AttachmentInfo {

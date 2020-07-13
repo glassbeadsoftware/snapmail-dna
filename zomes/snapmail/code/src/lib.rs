@@ -256,7 +256,7 @@ mod snapmail {
         data_hash: String,
         filename: String,
         filetype: String,
-        orig_filesize: u64,
+        orig_filesize: usize,
         chunks: Vec<Address>,
     ) -> ZomeApiResult<Address> {
         file::write_manifest(data_hash.into(), filename, filetype, orig_filesize, chunks)
