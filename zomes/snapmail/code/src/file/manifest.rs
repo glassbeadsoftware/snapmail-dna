@@ -8,12 +8,11 @@ use hdk::{
 };
 use crate::{
     entry_kind,
+    FILE_MAX_SIZE,
 };
 use holochain_wasm_utils::{
     holochain_persistence_api::hash::HashString,
 };
-
-const FILE_MAX_SIZE: usize = 1 * 1024 * 1024;
 
 //-------------------------------------------------------------------------------------------------
 // Definition

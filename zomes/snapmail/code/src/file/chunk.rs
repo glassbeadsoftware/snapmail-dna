@@ -8,11 +8,10 @@ use hdk::{
 };
 use crate::{
     entry_kind,
+    CHUNK_MAX_SIZE,
 };
 
 
-// const CHUNK_MAX_SIZE: usize = 1024 * 500;
-const CHUNK_MAX_SIZE: usize = 200 * 1024;
 
 //-------------------------------------------------------------------------------------------------
 // Definition
