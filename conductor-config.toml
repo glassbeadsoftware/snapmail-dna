@@ -3,14 +3,14 @@ persistence_dir = ''
 
 [[agents]]
 id = 'hc-run-agent'
-keystore_file = 'Alice'
-name = 'Alice'
-public_address = 'HcSciaDXrXkqxwv7gukMChvazIuscvcrk457t8n88cmo95en4sPCEdDKvj4ucja'
+keystore_file = 'Bob'
+name = 'Bob'
+public_address = 'HcSCi6q54V833PVHd9mckeY33vCHeymwm7wnkM5UwKGnbijrC38eV3FOqqmb7za'
 test_agent = true
 
 [[dnas]]
 file = './dist/snapmail-dna.dna.json'
-hash = 'Qmey1QZJ5hPyUqS337VpZGnSbzKK6FrZ6vSPnLP6UJHZZF'
+hash = 'QmYx3ZQTV2jf4jadD2dfw35CeP7QN7onSKsRwHj3bpywji'
 id = '__snapmail'
 
 [[instances]]
@@ -31,7 +31,7 @@ alias = 'test-instance'
 id = '__snapmail'
 
 [interfaces.driver]
-port = 50000
+port = 50001
 type = 'websocket'
 
 [[ui_bundles]]
@@ -43,7 +43,7 @@ bind_address = '127.0.0.1'
 bundle = 'snapmail_web_ui'
 dna_interface = 'snapmail_web_ui'
 id = 'snapmail_web_ui'
-port = 8888
+port = 8889
 reroute_to_root = false
 
 [logger]
@@ -54,7 +54,7 @@ type = 'debug'
 rules = []
 
 [network]
-sim2h_url = 'ws://sim2h.harris-braun.com:9049'
+sim2h_url = 'ws://sim2h.harris-braun.com:9050'
 type = 'sim2h'
 
 [passphrase_service]

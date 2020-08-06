@@ -63,48 +63,6 @@ module.exports = scenario => {
         t.deepEqual(history_result.length, 3)
     })
     //
-    // //
-    // scenario("update handle", async (s, t) => {
-    //     const {alex} = await s.players({alex: conductorConfig}, true)
-    //
-    //     // Create
-    //     let name = "alex"
-    //     let params = { name }
-    //     let handle_address = await alex.call("app", "snapmail", "set_handle", params)
-    //     console.log('handle_address1: ' + JSON.stringify(handle_address))
-    //     t.match(handle_address.Ok, RegExp('Qm*'))
-    //     let initial_handle_address = handle_address.Ok;
-    //     await s.consistency()
-    //     let result = await alex.call("app", "snapmail", "get_my_handle", {})
-    //     t.deepEqual(result.Ok, name)
-    //
-    //     // Update 2
-    //     name = "billy"
-    //     params = { name }
-    //     handle_address = await alex.call("app", "snapmail", "set_handle", params)
-    //     console.log('handle_address2: ' + JSON.stringify(handle_address))
-    //     t.match(handle_address.Ok, RegExp('Qm*'))
-    //     await s.consistency()
-    //     result = await alex.call("app", "snapmail", "get_my_handle", {})
-    //     t.deepEqual(result.Ok, name)
-    //
-    //     // Update 3
-    //     name = "Bob"
-    //     params = { name }
-    //     handle_address = await alex.call("app", "snapmail", "set_handle", params)
-    //     console.log('handle_address3: ' + JSON.stringify(handle_address))
-    //     t.match(handle_address.Ok, RegExp('Qm*'))
-    //     await s.consistency()
-    //     result = await alex.call("app", "snapmail", "get_my_handle", {})
-    //     t.deepEqual(result.Ok, name)
-    //
-    //     // Get history
-    //     let address = initial_handle_address
-    //     let params42 = { address }
-    //     let history_result = await alex.call("app", "snapmail", "get_my_handle_history", params42)
-    //     console.log('history_result: ' + JSON.stringify(history_result))
-    //     t.deepEqual(history_result.length, 3)
-    // })
     //
     // scenario("test handle list", async (s, t) => {
     //     const {alex, billy, camille} = await s.players({alex: conductorConfig, billy: conductorConfig, camille: conductorConfig}, true)

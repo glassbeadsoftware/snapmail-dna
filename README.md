@@ -16,6 +16,8 @@ Stop the running conductor (ctrl + c) and rerun the above again if you make chan
 
 ## Testing
 
+FIXME
+
 To run the tests
 
 ```
