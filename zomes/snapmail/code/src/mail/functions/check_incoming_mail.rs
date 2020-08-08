@@ -80,7 +80,11 @@ pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
             let manifest_address = attachment_info.manifest_address;
             // Retrieve
             hdk::debug(format!("Retrieving manifest: {}", manifest_address)).ok();
-            let maybe_manifest = request_manifest_by_dm(inmail.clone().from, manifest_address)?;
+            let maybe_maybe_manifest = request_manifest_by_dm(inmail.clone().from, manifest_address);
+            if let Err(_err) = maybe_maybe_manifest {
+                break;
+            }
+            let maybe_manifest = maybe_maybe_manifest.unwrap();
             if let None = maybe_manifest {
                 break;
             }
@@ -100,7 +104,11 @@ pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
         for manifest in manifest_list {
             for chunk_address in manifest.clone().chunks {
                 // Retrieve
-                let maybe_chunk = request_chunk_by_dm(inmail.clone().from, chunk_address)?;
+                let maybe_maybe_chunk = request_chunk_by_dm(inmail.clone().from, chunk_address);
+                if let Err(_err) = maybe_maybe_chunk {
+                    break;
+                }
+                let maybe_chunk = maybe_maybe_chunk.unwrap();
                 if let None = maybe_chunk {
                     break;
                 }
