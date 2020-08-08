@@ -3,15 +3,13 @@ use hdk::prelude::*;
 use hdk::{
     entry_definition::ValidatingEntryType,
     holochain_persistence_api::{
-        cas::content::Address, hash::HashString,
+        hash::HashString,
     },
 };
 use crate::{
     entry_kind,
     CHUNK_MAX_SIZE,
 };
-
-
 
 //-------------------------------------------------------------------------------------------------
 // Definition
@@ -66,31 +64,4 @@ impl FileChunk {
             chunk,
         }
     }
-}
-
-/// Zome function
-/// Write base64 file as string to source chain
-pub fn write_chunk(
-    data_hash: HashString,
-    chunk_index: usize,
-    chunk: String,
-) -> ZomeApiResult<Address> {
-    let initial_file = FileChunk::new(data_hash.clone(), chunk_index, chunk);
-    let file_entry = Entry::App(entry_kind::FileChunk.into(), initial_file.into());
-    let maybe_file_address = hdk::commit_entry(&file_entry);
-    maybe_file_address
-}
-
-/// Zome function
-/// Get chunk index and chunk as base64 string in local source chain at given address
-pub fn get_chunk(chunk_address: Address) -> ZomeApiResult<String> {
-    hdk::debug(format!("get_chunk(): {}", chunk_address)).ok();
-    let maybe_entry = hdk::get_entry(&chunk_address)
-        .expect("No reason for get_entry() to crash");
-    if maybe_entry.is_none() {
-        return Err(ZomeApiError::Internal("No chunk found at given address".into()))
-    }
-    let chunk = crate::into_typed::<FileChunk>(maybe_entry.unwrap())?;
-    // Ok((chunk.chunk_index, chunk.chunk))
-    Ok(chunk.chunk)
 }

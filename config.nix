@@ -89,7 +89,7 @@ See:
 '';
 
    # owner of the github repository that release are deployed to
-   owner = "h-be";
+   owner = "glassbeadsoftware";
 
    # repository name on github that release are deployed to
    repo = "snapmail-dna";

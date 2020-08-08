@@ -5,7 +5,7 @@ persistence_dir = ''
 id = 'hc-run-agent'
 keystore_file = 'Billy'
 name = 'Billy'
-public_address = 'HcScj7dBfR7jPasjtkg35Em78o9YixTqj9ITs8p6I3Ax7Q9w5u6WoGC6WNuk4wa'
+public_address = 'HcSCI3WB94JqKWc5w6szJ4SUr9s7Iqt9aq4ztv4A78w97bQoH6mSE4my4w5dgia'
 test_agent = true
 
 [[dnas]]
@@ -19,8 +19,8 @@ dna = '__snapmail'
 id = '__snapmail'
 
 [instances.storage]
-path = 'source_chain_billy'
 type = 'lmdb'
+path = 'source_chain_billy'
 
 [[interfaces]]
 admin = false

@@ -140,13 +140,13 @@ fn send_attachment_by_dm(destination: &AgentAddress, manifest: &FileManifest) ->
     return send_manifest_by_dm(destination, manifest, chunk_address_list);
 }
 
-
+/// Attempt sending Mail and attachments via Direct Messaging
 fn send_mail_by_dm(
     outmail_address: &Address,
     mail: &Mail,
     destination: &AgentAddress,
     manifest_list: &Vec<FileManifest>,
-) -> ZomeApiResult<bool> {
+) -> ZomeApiResult<()> {
 
     // -- Send Attachments
     hdk::debug("Send Attachments".to_string()).ok();
@@ -179,16 +179,16 @@ fn send_mail_by_dm(
     );
     hdk::debug(format!("send_mail_to() result = {:?}", result)).ok();
     //   Check Response
-    if let Ok(response) = result {
+    if let Ok(response) = result.clone() {
         hdk::debug(format!("Received response: {:?}", response)).ok();
         let maybe_msg: Result<DirectMessageProtocol, _> = serde_json::from_str(&response);
         if let Ok(msg) = maybe_msg {
             if let DirectMessageProtocol::Success(_) = msg {
-                return Ok(true);
+                return Ok(());
             }
         }
     };
-    Ok(false)
+    Err(ZomeApiError::Internal(format!("send() failed: {:?}", result)))
 }
 
 ///
@@ -199,19 +199,30 @@ fn send_mail_to(
     manifest_list: &Vec<FileManifest>,
 ) -> ZomeApiResult<SendSuccessKind> {
 
+    hdk::debug(format!("sending mail to... {}", destination)).ok();
+
     // 1. First try sending directly to other Agent if Online
-    let succeded = send_mail_by_dm(outmail_address, mail, destination, manifest_list)?;
-    if succeded {
+    let result = send_mail_by_dm(outmail_address, mail, destination, manifest_list);
+    if result.is_ok() {
         return Ok(SendSuccessKind::OK_DIRECT);
+    } else {
+        let err = result.err().unwrap();
+        hdk::debug(format!("send_mail_by_dm() failed: {:?}", err)).ok();
     }
+
+    // -- Send to DHT -- //
 
     // 2. Direct Send failed, so send to DHT instead by creating a PendingMail
     // Get Handle address first
+    hdk::debug(format!("Sending mail by DM failed. Getting handle for... {}", destination)).ok();
     let maybe_destination_handle_address = crate::handle::get_handle_entry(destination);
     if let None = maybe_destination_handle_address {
+        hdk::debug("No handle has been set for receiving agent").ok();
         return Err(ZomeApiError::Internal("No handle has been set for receiving agent".to_string()));
     }
     let destination_handle_address = maybe_destination_handle_address.unwrap().0;
+    hdk::debug(format!("destination_handle_address: {}", destination_handle_address)).ok();
+
     //    a. Commit PendingMail
     let pending = PendingMail::new(mail.clone(), outmail_address.clone());
     let pending_entry = Entry::App(entry_kind::PendingMail.into(), pending.into());
@@ -221,7 +232,7 @@ fn send_mail_to(
         return Err(pending_address_maybe.err().unwrap());
     };
     let pending_address = pending_address_maybe.unwrap();
-    hdk::debug(format!("pending_address = {}", pending_address)).ok();
+    hdk::debug(format!("pending_mail pending_address = {}", pending_address)).ok();
     //    a. Commit Pendings Link
     let link1_address_maybe = hdk::link_entries(&outmail_address, &pending_address, link_kind::Pendings, &pending_address.to_string());
     if let Err(err) = link1_address_maybe.clone() {
@@ -254,11 +265,15 @@ pub fn send_mail(
     manifest_address_list: Vec<Address>,
 ) -> ZomeApiResult<SendTotalResult> {
 
+    hdk::debug(format!("Sending mail: {}", subject)).ok();
+
     // Get file manifests from addresses
     let mut file_manifest_list = Vec::new();
+    let mut file_manifest_pair_list = Vec::new();
     for manifest_address in manifest_address_list.clone() {
-        let manifest = get_manifest(manifest_address)?;
-        file_manifest_list.push(manifest)
+        let manifest = get_manifest(manifest_address.clone())?;
+        file_manifest_list.push(manifest.clone());
+        file_manifest_pair_list.push((manifest_address.clone(), manifest))
     }
 
     // Create and commit OutMail
@@ -268,11 +283,11 @@ pub fn send_mail(
         to.clone(),
         cc.clone(),
         bcc.clone(),
-        manifest_address_list.clone(),
-        file_manifest_list.clone(),
+        file_manifest_pair_list.clone(),
     );
     let outmail_entry = Entry::App(entry_kind::OutMail.into(), outmail.clone().into());
     let outmail_address = hdk::commit_entry(&outmail_entry)?;
+    hdk::debug(format!("OutMail created: {}", outmail_address)).ok();
 
     // Send to each recepient
     let mut total_result = SendTotalResult::new(outmail_address.clone());

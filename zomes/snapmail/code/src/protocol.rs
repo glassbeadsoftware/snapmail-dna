@@ -13,6 +13,9 @@ pub enum DirectMessageProtocol {
     Ack(AckMessage),
     Failure(String),
     Success(String),
+    RequestChunk(Address),
+    RequestManifest(Address),
+    UnknownEntry,
     Ping,
 }
 

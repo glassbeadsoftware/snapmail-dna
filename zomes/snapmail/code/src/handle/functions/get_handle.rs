@@ -30,6 +30,7 @@ pub(crate) fn get_handle_entry(agentId: &AgentAddress) -> Option<(Address, Entry
     let query_result = hdk::query(EntryType::Dna.into(), 0, 0);
     let dna_address = query_result.ok().unwrap()[0].clone();
     hdk::debug(format!("dna_address33: {:?}", dna_address)).ok();
+    hdk::debug(format!("agentId33: {:?}", agentId)).ok();
     let entry_opts = GetEntryOptions::new(StatusRequestKind::default(), false, true, Timeout::default());
     let entry_results = hdk::get_links_result(
         //&*hdk::DNA_ADDRESS,
@@ -51,10 +52,12 @@ pub(crate) fn get_handle_entry(agentId: &AgentAddress) -> Option<(Address, Entry
             let header = item.headers[0].clone();
             let from = header.provenances()[0].clone();
             if from.source() == agentId.clone() {
+                hdk::debug("agentId33 match").ok();
                 return Some((header.entry_address().clone(), item.entry.unwrap()))
             }
         }
     }
+    hdk::debug("None33").ok();
     return None;
 }
 

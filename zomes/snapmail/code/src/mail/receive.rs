@@ -35,10 +35,16 @@ pub fn receive(from: Address, msg_json: JsonString) -> String {
         },
         DirectMessageProtocol::Ack(ack) => {
             mail::receive_direct_ack(from, ack)
-        }
+        },
+        DirectMessageProtocol::RequestChunk(address) => {
+            mail::receive_direct_request_chunk(from, address)
+        },
+        DirectMessageProtocol::RequestManifest(address) => {
+            mail::receive_direct_request_manifest(from, address)
+        },
         DirectMessageProtocol::Ping => {
             DirectMessageProtocol::Success(String::new())
-        }
+        },
         _ => {
             let response = DirectMessageProtocol::Failure("Unexpected protocol".to_owned());
             return serde_json::to_string(&response).expect("Should stringify");
@@ -48,6 +54,32 @@ pub fn receive(from: Address, msg_json: JsonString) -> String {
      msg_json
 }
 
+
+/// Handle a RequestFileManifestMessage.
+/// TODO: Emits `received_request_manifest` signal.
+/// Returns FileManifest, UnknownEntry or Failure.
+pub fn receive_direct_request_manifest(from: AgentAddress, manifest_address: Address) -> DirectMessageProtocol {
+    hdk::debug(format!("received request manifest from: {}", from)).ok();
+    let maybe_maybe_entry = hdk::get_entry(&manifest_address);
+    if let Err(err) = maybe_maybe_entry {
+        let response_str = "Failed on get_entry()";
+        hdk::debug(format!("{}: {}", response_str, err)).ok();
+        return DirectMessageProtocol::Failure(response_str.to_string());
+    }
+    let maybe_entry = maybe_maybe_entry.unwrap();
+    if let None = maybe_entry {
+        return DirectMessageProtocol::UnknownEntry;
+    }
+    hdk::debug(format!("Sending manifest: {}", manifest_address)).ok();
+    let maybe_manifest = crate::into_typed::<FileManifest>(maybe_entry.unwrap());
+    if let Err(_err) = maybe_manifest {
+        let response_str = "Requested entry is not a FileManifest";
+        hdk::debug(format!("{}", response_str)).ok();
+        return DirectMessageProtocol::Failure(response_str.to_string());
+    }
+    // Return Success response
+    return DirectMessageProtocol::FileManifest(maybe_manifest.unwrap());
+}
 
 /// Handle a FileManifestMessage.
 /// Emits `received_manifest` signal.
@@ -70,6 +102,32 @@ pub fn receive_direct_manifest(from: AgentAddress, manifest: FileManifest) -> Di
     return DirectMessageProtocol::Success(manifest_address.into());
 }
 
+/// Handle a RequestFileChunkMessage.
+/// Emits `received_request_chunk` signal.
+/// Returns FileChunk, UnknownEntry or Failure.
+pub fn receive_direct_request_chunk(from: AgentAddress, chunk_address: Address) -> DirectMessageProtocol {
+    hdk::debug(format!("received request chunk from: {}", from)).ok();
+    // FIXME: emit signal
+    let maybe_maybe_entry = hdk::get_entry(&chunk_address);
+    if let Err(err) = maybe_maybe_entry {
+        let response_str = "Failed on get_entry()";
+        hdk::debug(format!("{}: {}", response_str, err)).ok();
+        return DirectMessageProtocol::Failure(response_str.to_string());
+    }
+    let maybe_entry = maybe_maybe_entry.unwrap();
+    if let None = maybe_entry {
+        return DirectMessageProtocol::UnknownEntry;
+    }
+    hdk::debug(format!("Sending chunk: {}", chunk_address)).ok();
+    let maybe_chunk = crate::into_typed::<FileChunk>(maybe_entry.unwrap());
+    if let Err(_err) = maybe_chunk {
+        let response_str = "Requested entry is not a FileChunk";
+        hdk::debug(format!("{}", response_str)).ok();
+        return DirectMessageProtocol::Failure(response_str.to_string());
+    }
+    // Return Success response
+    return DirectMessageProtocol::Chunk(maybe_chunk.unwrap());
+}
 
 /// Handle a ChunkMessage.
 /// Emits `received_chunk` signal.

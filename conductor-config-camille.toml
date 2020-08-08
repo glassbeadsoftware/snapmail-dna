@@ -3,9 +3,9 @@ persistence_dir = ''
 
 [[agents]]
 id = 'hc-run-agent'
-keystore_file = 'Billy'
-name = 'Billy'
-public_address = 'HcScj7dBfR7jPasjtkg35Em78o9YixTqj9ITs8p6I3Ax7Q9w5u6WoGC6WNuk4wa'
+keystore_file = 'Camille'
+name = 'Camille'
+public_address = 'HcScIfu459SHYhmt6z8M3XNqE73Kcqr9rPWOpIO5b4FvyzndOB8FxAAg6Faizmr'
 test_agent = true
 
 [[dnas]]
@@ -19,8 +19,8 @@ dna = '__snapmail'
 id = '__snapmail'
 
 [instances.storage]
-path = 'source_chain_billy'
 type = 'lmdb'
+path = 'source_chain_camille'
 
 [[interfaces]]
 admin = false
@@ -32,7 +32,7 @@ alias = 'test-instance'
 id = '__snapmail'
 
 [interfaces.driver]
-port = 50000
+port = 50001
 type = 'websocket'
 
 [[ui_bundles]]
@@ -44,7 +44,7 @@ bind_address = '127.0.0.1'
 bundle = 'snapmail_web_ui'
 dna_interface = 'snapmail_web_ui'
 id = 'snapmail_web_ui'
-port = 8889
+port = 8890
 reroute_to_root = false
 
 [logger]

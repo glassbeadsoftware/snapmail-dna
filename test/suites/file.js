@@ -163,66 +163,66 @@ module.exports = scenario => {
     //     }
     //     t.deepEqual(data_string, result_string)
     // })
-
     //
-    scenario("test send too big file", async (s, t) => {
-        const {alex} = await s.players({alex: conductorConfig}, true)
-
-        // - Create fake file
-        const data_string = "0123465789";
-        // const data_string = "<fake file content>";
-        // split file
-        const fileChunks = split_file(data_string)
-        // Write chunks
-        var chunk_list = [];
-        for (var i = 0; i < fileChunks.numChunks; ++i) {
-            const chunk_params = {
-                data_hash: fileChunks.dataHash,
-                chunk_index: i,
-                chunk: fileChunks.chunks[i],
-            }
-            const chunk_address = await alex.call("app", "snapmail", "write_chunk", chunk_params)
-            console.log('chunk_address' + i + ': ' + JSON.stringify(chunk_address))
-            t.match(chunk_address.Ok, RegExp('Qm*'))
-            chunk_list.push(chunk_address.Ok)
-        }
-        chunk_list = chunk_list.reverse();
-
-        // Write manifest
-        let manifest_params;
-        manifest_params = {
-            data_hash: fileChunks.dataHash,
-            filename: "bigfake.str",
-            filetype: "str",
-            orig_filesize: 2 * 1024 * 1024,
-            chunks: chunk_list,
-        }
-        let manifest_address = await alex.call("app", "snapmail", "write_manifest", manifest_params)
-        console.log('manifest_address: ' + JSON.stringify(manifest_address))
-        t.match(JSON.stringify(manifest_address.Err), RegExp('.*ValidationFailed.*'))
-
-        // Empty filesize
-        manifest_params = {
-            data_hash: fileChunks.dataHash,
-            filename: "emptyfake.str",
-            filetype: "str",
-            orig_filesize: 0,
-            chunks: chunk_list,
-        }
-        manifest_address = await alex.call("app", "snapmail", "write_manifest", manifest_params)
-        console.log('manifest_address: ' + JSON.stringify(manifest_address))
-        t.match(JSON.stringify(manifest_address.Err), RegExp('.*ValidationFailed.*'))
-
-        // emtpy chunk list
-        manifest_params = {
-            data_hash: fileChunks.dataHash,
-            filename: "emptyfake.str",
-            filetype: "str",
-            orig_filesize: 0.5 * 1024 * 1024,
-            chunks: [],
-        }
-        manifest_address = await alex.call("app", "snapmail", "write_manifest", manifest_params)
-        console.log('manifest_address: ' + JSON.stringify(manifest_address))
-        t.match(JSON.stringify(manifest_address.Err), RegExp('.*ValidationFailed.*'))
-    })
+    // //
+    // scenario("test send too big file", async (s, t) => {
+    //     const {alex} = await s.players({alex: conductorConfig}, true)
+    //
+    //     // - Create fake file
+    //     const data_string = "0123465789";
+    //     // const data_string = "<fake file content>";
+    //     // split file
+    //     const fileChunks = split_file(data_string)
+    //     // Write chunks
+    //     var chunk_list = [];
+    //     for (var i = 0; i < fileChunks.numChunks; ++i) {
+    //         const chunk_params = {
+    //             data_hash: fileChunks.dataHash,
+    //             chunk_index: i,
+    //             chunk: fileChunks.chunks[i],
+    //         }
+    //         const chunk_address = await alex.call("app", "snapmail", "write_chunk", chunk_params)
+    //         console.log('chunk_address' + i + ': ' + JSON.stringify(chunk_address))
+    //         t.match(chunk_address.Ok, RegExp('Qm*'))
+    //         chunk_list.push(chunk_address.Ok)
+    //     }
+    //     chunk_list = chunk_list.reverse();
+    //
+    //     // Write manifest
+    //     let manifest_params;
+    //     manifest_params = {
+    //         data_hash: fileChunks.dataHash,
+    //         filename: "bigfake.str",
+    //         filetype: "str",
+    //         orig_filesize: 2 * 1024 * 1024,
+    //         chunks: chunk_list,
+    //     }
+    //     let manifest_address = await alex.call("app", "snapmail", "write_manifest", manifest_params)
+    //     console.log('manifest_address: ' + JSON.stringify(manifest_address))
+    //     t.match(JSON.stringify(manifest_address.Err), RegExp('.*ValidationFailed.*'))
+    //
+    //     // Empty filesize
+    //     manifest_params = {
+    //         data_hash: fileChunks.dataHash,
+    //         filename: "emptyfake.str",
+    //         filetype: "str",
+    //         orig_filesize: 0,
+    //         chunks: chunk_list,
+    //     }
+    //     manifest_address = await alex.call("app", "snapmail", "write_manifest", manifest_params)
+    //     console.log('manifest_address: ' + JSON.stringify(manifest_address))
+    //     t.match(JSON.stringify(manifest_address.Err), RegExp('.*ValidationFailed.*'))
+    //
+    //     // emtpy chunk list
+    //     manifest_params = {
+    //         data_hash: fileChunks.dataHash,
+    //         filename: "emptyfake.str",
+    //         filetype: "str",
+    //         orig_filesize: 0.5 * 1024 * 1024,
+    //         chunks: [],
+    //     }
+    //     manifest_address = await alex.call("app", "snapmail", "write_manifest", manifest_params)
+    //     console.log('manifest_address: ' + JSON.stringify(manifest_address))
+    //     t.match(JSON.stringify(manifest_address.Err), RegExp('.*ValidationFailed.*'))
+    // })
 }

@@ -4,7 +4,7 @@ let
   ''
   set -euxo pipefail
   mkdir dist
-  hc package -o dist/snapmail.dna.json
+  hc package -o dist/snapmail-dna.dna.json
   hc test --skip-package
   '';
 in

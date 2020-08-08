@@ -4,12 +4,14 @@ use hdk::holochain_persistence_api::cas::content::Address;
 use crate::{
     AgentAddress,
     mail::entries::MailItem,
+    file::FileManifest,
 };
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub enum SignalProtocol {
     ReceivedMail(MailItem),
     ReceivedAck(ReceivedAck),
+    ReceivedFile(FileManifest),
 }
 
 // #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]

@@ -8,16 +8,18 @@ use hdk::{
     holochain_core_types::{
         entry::Entry,
     },
+    holochain_json_api::json::JsonString,
 };
 use holochain_wasm_utils::{
     holochain_core_types::link::LinkMatch,
 };
 use crate::{
-    link_kind, entry_kind,
-    mail::{self, entries::InMail},
-};
+    signal_protocol::*,
+    file::dm::{request_chunk_by_dm, request_manifest_by_dm},
+    link_kind, entry_kind, mail::{self, entries::InMail}, file::{FileManifest}};
 
-/// Return list of new InMail addresses
+/// Zome Function
+/// Return list of new InMail addresses created after checking MailInbox links
 pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
     let maybe_my_handle_address = crate::handle::get_my_handle_entry();
     if let None = maybe_my_handle_address {
@@ -32,7 +34,7 @@ pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
         LinkMatch::Any,
     )?;
     hdk::debug(format!("incoming_mail links_result: {:?} (for {})", links_result, &my_handle_address)).ok();
-    // For each link
+    // For each MailInbox link
     let mut new_inmails = Vec::new();
     for pending_address in &links_result.addresses() {
         //  1. Get entry on the DHT
@@ -45,7 +47,7 @@ pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
         let (author, pending) = maybe_pending_mail.unwrap();
         //  2. Convert and Commit as InMail
         let inmail = InMail::from_pending(pending, author);
-        let inmail_entry = Entry::App(entry_kind::InMail.into(), inmail.into());
+        let inmail_entry = Entry::App(entry_kind::InMail.into(), inmail.clone().into());
         let maybe_inmail_address = hdk::commit_entry(&inmail_entry);
         if maybe_inmail_address.is_err() {
             hdk::debug("Failed committing InMail").ok();
@@ -68,9 +70,57 @@ pub fn check_incoming_mail() -> ZomeApiResult<Vec<Address>> {
         //  4. Delete PendingMail entry
         let res = hdk::remove_entry(pending_address);
         if let Err(err) = res {
-            hdk::debug("Delete PendingMail failed:").ok();
-            hdk::debug(err).ok();
-            continue;
+            hdk::debug(format!("Delete PendingMail failed: {:?}", err)).ok();
+            //continue; // TODO: figure out why delete entry fails
+        }
+        hdk::debug(format!("incoming_mail attachments: {}", inmail.clone().mail.attachments.len())).ok();
+        //  5. Retrieve and write FileManifest for each attachment
+        let mut manifest_list: Vec<FileManifest> = Vec::new();
+        for attachment_info in inmail.clone().mail.attachments {
+            let manifest_address = attachment_info.manifest_address;
+            // Retrieve
+            hdk::debug(format!("Retrieving manifest: {}", manifest_address)).ok();
+            let maybe_manifest = request_manifest_by_dm(inmail.clone().from, manifest_address)?;
+            if let None = maybe_manifest {
+                break;
+            }
+            let manifest = maybe_manifest.unwrap();
+            // Write
+            let file_entry = Entry::App(entry_kind::FileManifest.into(), manifest.clone().into());
+            let maybe_file_address = hdk::commit_entry(&file_entry);
+            if let Err(err) = maybe_file_address {
+                let response_str = "Failed committing FileManifest";
+                hdk::debug(format!("{}: {}", response_str, err)).ok();
+                break;
+            }
+            // Add to list
+            manifest_list.push(manifest);
+        }
+        //  6. Retrieve and write each FileChunk for each attachment
+        for manifest in manifest_list {
+            for chunk_address in manifest.clone().chunks {
+                // Retrieve
+                let maybe_chunk = request_chunk_by_dm(inmail.clone().from, chunk_address)?;
+                if let None = maybe_chunk {
+                    break;
+                }
+                let chunk = maybe_chunk.unwrap();
+                // Write
+                let file_entry = Entry::App(entry_kind::FileChunk.into(), chunk.into());
+                let maybe_address = hdk::commit_entry(&file_entry);
+                if let Err(err) = maybe_address {
+                    let response_str = "Failed committing FileChunk";
+                    hdk::debug(format!("{}: {}", response_str, err)).ok();
+                    break;
+                }
+            }
+            // Emit Signal
+            let signal = SignalProtocol::ReceivedFile(manifest);
+            let signal_json = serde_json::to_string(&signal).expect("Should stringify");
+            let res = hdk::emit_signal("received_file", JsonString::from_json(&signal_json));
+            if let Err(err) = res {
+                hdk::debug(format!("Emit signal failed: {}", err)).ok();
+            }
         }
     }
     Ok(new_inmails)

@@ -51,16 +51,19 @@ mod snapmail {
     use crate::DirectMessageProtocol;
     use crate::file::FileManifest;
 
+
     #[init]
     fn init() {
         // TODO: create initial username with AgentId
         Ok(())
     }
 
+
     #[validate_agent]
     pub fn validate_agent(validation_data: EntryValidationData<AgentAddress>) {
         Ok(())
     }
+
 
     /// Receive point for one of the Protocol messages
     #[receive]
@@ -75,40 +78,48 @@ mod snapmail {
         handle::handle_def()
     }
 
+
     #[entry_def]
-     fn outmail_def() -> ValidatingEntryType {
+    fn outmail_def() -> ValidatingEntryType {
         mail::entries::outmail_def()
     }
+
 
     #[entry_def]
     fn inmail_def() -> ValidatingEntryType {
         mail::entries::inmail_def()
     }
 
+
     #[entry_def]
     fn pending_mail_def() -> ValidatingEntryType {
         mail::entries::pending_mail_def()
     }
+
 
     #[entry_def]
     fn pending_ack_def() -> ValidatingEntryType {
         mail::entries::pending_ack_def()
     }
 
+
     #[entry_def]
     fn outack_def() -> ValidatingEntryType {
         mail::entries::outack_def()
     }
+
 
     #[entry_def]
     fn inack_def() -> ValidatingEntryType {
         mail::entries::inack_def()
     }
 
+
     #[entry_def]
     fn file_chunk_def() -> ValidatingEntryType {
         file::file_chunk_def()
     }
+
 
     #[entry_def]
     fn file_manifest_def() -> ValidatingEntryType {
@@ -123,9 +134,11 @@ mod snapmail {
     #[zome_fn("hc_public")]
     fn set_handle(name: String) -> ZomeApiResult<Address> { handle::set_handle(name) }
 
+
     /// Get this agent's latest handle
     #[zome_fn("hc_public")]
     fn get_my_handle() -> ZomeApiResult<String> { handle::get_my_handle() }
+
 
     /// Get some agent's latest handle
     #[zome_fn("hc_public")]
@@ -133,10 +146,12 @@ mod snapmail {
         handle::get_handle(agentId.into())
     }
 
+
     #[zome_fn("hc_public")]
     fn get_all_handles() -> ZomeApiResult<Vec<(String, AgentAddress, Address)>> {
         handle::get_all_handles()
     }
+
 
     /// For testing only
     #[zome_fn("hc_public")]
@@ -144,16 +159,19 @@ mod snapmail {
         handle::set_three_handles(name1, name2, name3)
     }
 
+
     /// Get all my handles starting from address
     #[zome_fn("hc_public")]
     pub fn get_my_handle_history(address: String) -> Vec<String> {
         handle::get_my_handle_history(address.into())
     }
 
+
     #[zome_fn("hc_public")]
     fn find_agent(handle: String) -> ZomeApiResult<Vec<AgentAddress>> {
         handle::find_agent(handle)
     }
+
 
     #[zome_fn("hc_public")]
     fn ping_agent(agentId: String) -> ZomeApiResult<bool> {
@@ -179,11 +197,13 @@ mod snapmail {
         mail::send_mail(subject, payload, to, cc, bcc, manifest_address_list)
     }
 
+
     /// Get an InMail or OutMail at given address.
     #[zome_fn("hc_public")]
     fn get_mail(address: Address) -> Option<Result<InMail, OutMail>> {
         mail::get_mail(address)
     }
+
 
     /// Get an InMail or OutMail at given address.
     #[zome_fn("hc_public")]
@@ -196,11 +216,13 @@ mod snapmail {
     #[zome_fn("hc_public")]
     fn get_all_mails() -> ZomeApiResult<Vec<MailItem>> { mail::get_all_mails() }
 
+
     /// Return list of all InMails that this agent did not acknowledge.
     #[zome_fn("hc_public")]
     fn get_all_arrived_mail() -> ZomeApiResult<Vec<Address>> {
         mail::get_all_arrived_mail()
     }
+
 
     /// Check PendingMails sent to this agent.
     /// Converts each into an InMail.
@@ -210,6 +232,7 @@ mod snapmail {
         mail::check_incoming_mail()
     }
 
+
     /// Check for PendingAcks sent to this agent.
     /// Converts each into an InAck.
     /// Return list of outMail addresses for which we succesfully linked a new InAck
@@ -218,12 +241,14 @@ mod snapmail {
         mail::check_incoming_ack()
     }
 
+
     /// Create & share an Acknowledgmeent for a mail we received.
     /// Return Address of OutAck.
     #[zome_fn("hc_public")]
     fn acknowledge_mail(inmail_address: Address) -> ZomeApiResult<Address> {
         mail::acknowledge_mail(inmail_address)
     }
+
 
     /// Check if agent received a receipt from all receipients of one of this agent's OutMail.
     /// If false, returns list of agents who's receipt is missing.
@@ -232,11 +257,13 @@ mod snapmail {
         mail::has_mail_been_received(outmail_address)
     }
 
+
     /// Check if an InMail's source has received an Acknowledgement from this agent.
     #[zome_fn("hc_public")]
     fn has_ack_been_received(inmail_address: Address) -> ZomeApiResult<bool> {
         mail::has_ack_been_received(inmail_address)
     }
+
 
     /// Add file chunk to source chain
     #[zome_fn("hc_public")]
@@ -244,11 +271,13 @@ mod snapmail {
         file::write_chunk(data_hash.into(), chunk_index, chunk)
     }
 
+
     /// Get file chunk at given address.
     #[zome_fn("hc_public")]
     fn get_chunk(chunk_address: String) -> ZomeApiResult<String> {
         file::get_chunk(chunk_address.into())
     }
+
 
     /// Write file manifest to source chain
     #[zome_fn("hc_public")]
@@ -262,11 +291,13 @@ mod snapmail {
         file::write_manifest(data_hash.into(), filename, filetype, orig_filesize, chunks)
     }
 
+
     /// Get manifest entry at given address
     #[zome_fn("hc_public")]
     fn get_manifest(manifest_address: Address) -> ZomeApiResult<FileManifest> {
         file::get_manifest(manifest_address)
     }
+
 
     /// Get manifest entry at given address
     #[zome_fn("hc_public")]
@@ -274,9 +305,24 @@ mod snapmail {
         file::find_manifest(data_hash.into())
     }
 
+
     /// Get all manifests stored in our source chain
     #[zome_fn("hc_public")]
     fn get_all_manifests() -> ZomeApiResult<Vec<FileManifest>> {
         file::get_all_manifests()
+    }
+
+
+    /// Attempt getting all file attachments from an inmail
+    #[zome_fn("hc_public")]
+    fn get_missing_attachments(from: AgentAddress, inmail_address: Address) -> ZomeApiResult<u32> {
+        file::get_missing_attachments(from, inmail_address)
+    }
+
+
+    /// Attempt getting all file attachments from an inmail
+    #[zome_fn("hc_public")]
+    fn get_missing_chunks(from: AgentAddress, manifest_address: Address) -> ZomeApiResult<u32> {
+        file::get_missing_chunks(from, manifest_address)
     }
 }

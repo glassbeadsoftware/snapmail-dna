@@ -35,8 +35,9 @@ const orchestrator = new Orchestrator({
 
 //require('./suites/handle')(orchestrator.registerScenario)
 //require('./suites/mail')(orchestrator.registerScenario)
-require('./suites/file')(orchestrator.registerScenario)
+//require('./suites/file')(orchestrator.registerScenario)
 //require('./suites/file_chunk')(orchestrator.registerScenario)
+require('./suites/pending_file')(orchestrator.registerScenario)
 
 const num = orchestrator.numRegistered()
 console.log(`Orchestrator Registered ${num} scenarios`)

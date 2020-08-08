@@ -89,15 +89,17 @@ pub struct Mail {
 /// Metadata for a mail attachment
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct AttachmentInfo {
+    pub manifest_address: Address,
     pub data_hash: Address,
     pub filename: String,
     pub filetype: String,
     pub orig_filesize: usize,
 }
 
-impl From<FileManifest> for AttachmentInfo {
-    fn from(manifest: FileManifest) -> Self {
+impl AttachmentInfo {
+    fn from_manifest(manifest: FileManifest, manifest_address: Address) -> Self {
         Self {
+            manifest_address: manifest_address.clone(),
             data_hash: manifest.data_hash.clone(),
             filename: manifest.filename.clone(),
             filetype: manifest.filetype.clone(),

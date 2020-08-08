@@ -23,7 +23,6 @@ use crate::mail::entries::AttachmentInfo;
 pub struct OutMail {
     pub mail: Mail,
     pub bcc: Vec<AgentAddress>,
-    pub manifest_address_list: Vec<Address>,
 }
 
 /// Entry definition
@@ -74,10 +73,9 @@ pub fn outmail_def() -> ValidatingEntryType {
 
 ///
 impl OutMail {
-    pub fn new(mail: Mail, bcc: Vec<AgentAddress>, manifest_address_list: Vec<Address>) -> Self {
+    pub fn new(mail: Mail, bcc: Vec<AgentAddress>) -> Self {
         Self {
             mail, bcc,
-            manifest_address_list,
         }
     }
 
@@ -87,18 +85,17 @@ impl OutMail {
         to: Vec<AgentAddress>,
         cc: Vec<AgentAddress>,
         bcc: Vec<AgentAddress>,
-        manifest_address_list: Vec<Address>,
-        file_manifest_list: Vec<FileManifest>,
+        file_manifest_list: Vec<(Address, FileManifest)>,
     ) -> Self {
         assert_ne!(0, to.len() + cc.len() + bcc.len());
         // TODO: remove duplicate receipients
 
         let attachments: Vec<AttachmentInfo> = file_manifest_list
-            .iter().map(|manifest| AttachmentInfo::from(manifest.clone()))
+            .iter().map(|(address, manifest)| AttachmentInfo::from_manifest(manifest.clone(), address.clone()))
             .collect();
 
         let date_sent = crate::snapmail_now();
         let mail = Mail { date_sent, subject, payload, to, cc, attachments };
-        OutMail::new(mail, bcc, manifest_address_list)
+        OutMail::new(mail, bcc)
     }
 }
