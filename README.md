@@ -7,10 +7,15 @@ Native application for Windows, Linux and MacOS are available.
 
 Some design documentation is available in the `/spec` folder.
 
-CI and NIX is not set up for the moment.
+CI and NIX configs are not set up for the moment.
 
 
 ## Building
+
+Get the latest holochain release and nix-shell:
+```
+nix-shell https://holochain.love
+```
 
 To rebuild the DNA for holochain, use the `hc` command:
 
@@ -34,9 +39,10 @@ To launch the tests, run command:
 nix-shell --run 'hc test'
 ```
 
-## Running
+## Running with UI
 
-First make sure the sim2h server is up and running:
+ 1. Download the [snapmail-ui repo](https://github.com/glassbeadsoftware/snapmail-ui) and store it at same folder level than `snapmail-dna`
+ 2. Make sure the sim2h server is up and running:
 
 ```
 nix-shell --run 'hc sim2h-client -u ws://sim2h.harris-braun.com:9051 -m status'
@@ -44,11 +50,16 @@ nix-shell --run 'hc sim2h-client -u ws://sim2h.harris-braun.com:9051 -m status'
 You should get an `Await successfull` response. Otherwise it will timeout.
 
 
-To run a temporary test agent, do:
+ 3. To run a temporary test agent, do:
 ```
 nix-shell --run 'hc run --networked sim2h --sim2h-server ws://sim2h.harris-braun.com:9051 --agent-name Alice --port 8888'
 ```
 
+ 4. Open your favorite web browser at url: `http://127.0.0.1:8888`
+
+  
+  
+  
 To run a permanent test agent, modifiy the example `conductor-config*.toml` files provided. Than do:
 
 ```
