@@ -17,7 +17,7 @@ const network =
                 : networkType === 'sim2h'
                     ? {
                         type: 'sim2h',
-                        sim2h_url: 'ws://sim2h.harris-braun.com:9050'
+                        sim2h_url: 'ws://sim2h.harris-braun.com:9051'
                         //sim2h_url: 'ws://localhost:9000'
                     }
 

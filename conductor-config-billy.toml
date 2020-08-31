@@ -55,7 +55,7 @@ type = 'debug'
 rules = []
 
 [network]
-sim2h_url = 'ws://sim2h.harris-braun.com:9050'
+sim2h_url = 'ws://sim2h.harris-braun.com:9051'
 type = 'sim2h'
 
 [passphrase_service]
