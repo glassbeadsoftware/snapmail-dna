@@ -27,22 +27,28 @@ const middleware =
 
 const orchestrator = new Orchestrator({
     middleware
-    // , waiter: {
-    //     softTimeout: 10000,
-    //     hardTimeout: 20000,
-    // }
+    , waiter: {
+        softTimeout: 1000,
+        hardTimeout: 2000,
+        strict: false,
+    }
 })
 
 //require('./suites/handle')(orchestrator.registerScenario)
 //require('./suites/mail')(orchestrator.registerScenario)
-//require('./suites/file')(orchestrator.registerScenario)
-//require('./suites/file_chunk')(orchestrator.registerScenario)
-//require('./suites/pending_file')(orchestrator.registerScenario)
-require('./suites/pending_file_three')(orchestrator.registerScenario)
+//require('./suites/chunk')(orchestrator.registerScenario)
+//require('./suites/file_send')(orchestrator.registerScenario)
+//require('./suites/file_send_pending')(orchestrator.registerScenario)
+require('./suites/file_send_pending_three')(orchestrator.registerScenario)
 
 const num = orchestrator.numRegistered()
 console.log(`Orchestrator Registered ${num} scenarios`)
 
+var beginning = Date.now();
 orchestrator.run().then(stats => {
-    console.log(`All ${num} scenarios done.`)
+    let end = Date.now();
+    let elapsed = end - beginning;
+    console.log(`All ${num} scenarios done. Stats:`)
+    console.log(stats)
+    console.log("Tests duration: " + elapsed / 1000 + ' sec')
 })
