@@ -1,6 +1,19 @@
-const { conductorConfig } = require('../config')
+const { conductorConfig, conductorConfigPerf } = require('../config')
 const { sleep, filterMailList } = require('../utils')
 
+// -- Export scenarios -- //
+
+module.exports = scenario => {
+    //scenario("test stress 10 mail", test_stress_10_mail)
+    scenario("test stress 100 mail", test_stress_100_mail)
+
+
+    // LONG LONG TESTS
+    // hdk::query() takes too long (over 90sec)
+    //scenario("test stress 1k mail", test_stress_1k_mail)
+}
+
+// -- Scenarios -- //
 
 const test_stress_1k_mail = async (s, t) => {
     await test_stress_send_mail(s, t, 1000)
@@ -19,7 +32,7 @@ const test_stress_10_mail = async (s, t) => {
  */
 const test_stress_send_mail = async (s, t, loop_count) => {
 
-    const {alex, billy} = await s.players({alex: conductorConfig, billy: conductorConfig}, true)
+    const {alex, billy} = await s.players({alex: conductorConfigPerf, billy: conductorConfigPerf}, true)
 
     let send_start = Date.now();
 
@@ -104,19 +117,7 @@ const test_stress_send_mail = async (s, t, loop_count) => {
     console.log("Get All duration : " + get_all_duration + ' sec')
     console.log("Get duration     : " + get_duration + ' sec')
     console.log("Ack duration     : " + ack_duration + ' sec')
-    console.log("====================================");
+    console.log("------------------------------------");
     console.log("Test duration    : " + test_duration + ' sec')
+    console.log("====================================");
 };
-
-
-// -- Export scenarios -- //
-
-module.exports = scenario => {
-    scenario("test stress 10 mail", test_stress_10_mail)
-    scenario("test stress 100 mail", test_stress_100_mail)
-
-
-    // FAILING TESTS
-    // hdk::query fails for too big data
-    //scenario("test stress 1k mail", test_stress_1k_mail)
-}

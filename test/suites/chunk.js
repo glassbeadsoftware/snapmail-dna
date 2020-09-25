@@ -2,6 +2,16 @@ const { conductorConfig } = require('../config')
 const { split_file } = require('../utils')
 
 
+// -- Export scenarios -- //
+
+module.exports = scenario => {
+    scenario("test write one chunk", test_write_one_chunk)
+    scenario("test write/get multi-chunk file with manifest", test_write_multichunk_file)
+    scenario("test write too big chunk", test_write_too_big_chunk)
+}
+
+// -- Scenarios -- //
+
 /**
  *
  */
@@ -110,12 +120,3 @@ const test_write_too_big_chunk =  async (s, t) => {
     let file_err = JSON.parse(file_address.Err.Internal);
     t.match(JSON.stringify(file_err.kind), RegExp('ValidationFailed*'))
 };
-
-
-// -- Export scenarios -- //
-
-module.exports = scenario => {
-    scenario("test write one chunk", test_write_one_chunk)
-    scenario("test write/get multi-chunk file with manifest", test_write_multichunk_file)
-    scenario("test write too big chunk", test_write_too_big_chunk)
-}

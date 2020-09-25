@@ -1,7 +1,16 @@
 const { conductorConfig } = require('../config')
 const { sleep, filterMailList } = require('../utils')
 
+// -- Export scenarios -- //
 
+module.exports = scenario => {
+    scenario("send pending test", send_pending_test)
+    scenario("send via DM test", send_dm_test)
+    scenario("get all mails test", test_get_all_mails)
+}
+
+
+//
 async function setup_handles(s, t, alex, billy) {
     // Make sure Billy has a handle entry
     let name = "billy"
@@ -69,7 +78,7 @@ const send_pending_test = async (s, t) => {
     console.log('** CALLING: send_mail()')
     const send_result = await alex.call("app", "snapmail", "send_mail", send_params)
     console.log('send_result: ' + JSON.stringify(send_result))
-    // Should have pendings
+    // Should have no pendings
     t.deepEqual(send_result.Ok.cc_pendings, {})
 
     // -- Billy goes online -- //
@@ -90,7 +99,6 @@ const send_pending_test = async (s, t) => {
     t.match(check_result.Ok[0], RegExp('Qm*'))
 
     const arrived_result = await billy.call("app", "snapmail", "get_all_arrived_mail", {})
-
     console.log('arrived_result : ' + JSON.stringify(arrived_result.Ok[0]))
     t.deepEqual(arrived_result.Ok.length, 1)
     const mail_adr = arrived_result.Ok[0]
@@ -344,12 +352,3 @@ const test_get_all_mails = async (s, t) => {
     t.deepEqual(live_mail_list.length, 3)
     t.deepEqual(live_mail_list[0].mail.payload, send_params.payload)
 };
-
-
-// -- Export scenarios -- //
-
-module.exports = scenario => {
- scenario("send pending test", send_pending_test)
- scenario("send via DM test", send_dm_test)
- scenario("get all mails test", test_get_all_mails)
-}

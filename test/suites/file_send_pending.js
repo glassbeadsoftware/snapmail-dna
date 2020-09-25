@@ -2,23 +2,27 @@ const { conductorConfig } = require('../config')
 const { split_file } = require('../utils')
 
 
-/**
- *
- */
+// -- Export scenarios -- //
+
+module.exports = scenario => {
+    scenario("test send file async tiny", test_send_file_async_tiny)
+
+    // LONG TESTS
+    // process.env['TRYORAMA_ZOME_CALL_TIMEOUT_MS'] = 90000
+    //scenario("test send file async big", test_send_file_async_big)
+    //scenario("test send file async three", test_send_file_async_three)
+}
+
+// -- Scenarios -- //
+
 const test_send_file_async_tiny = async (s, t) => {
     await test_send_file_async(s, t, 1 * 1024)
 }
 
-/**
- *
- */
 const test_send_file_async_big = async (s, t) => {
     await test_send_file_async(s, t, 500 * 1024)
 }
 
-/**
- *
- */
 const test_send_file_async = async (s, t, size) => {
 
     // - Create fake file
@@ -364,14 +368,3 @@ const test_send_file_async_three = async (s, t) => {
     t.deepEqual(data_string.length, result_string.length)
     t.deepEqual(data_string, result_string)
 };
-
-// -- Export scenarios -- //
-
-module.exports = scenario => {
-    scenario("test send file async tiny", test_send_file_async_tiny)
-
-    // LONG TESTS
-    // process.env['TRYORAMA_ZOME_CALL_TIMEOUT_MS'] = 90000
-    //scenario("test send file async big", test_send_file_async_big)
-    //scenario("test send file async three", test_send_file_async_three)
-}

@@ -1,7 +1,20 @@
 const { conductorConfig } = require('../config')
 
+// -- Export scenarios -- //
 
-//
+module.exports = scenario => {
+    scenario("test get/set handle", test_getset_handle)
+    scenario("test handle list", test_handle_list)
+
+    // FAILING
+    // scenario("test set 3 handles", test_set_3_handles)
+}
+
+// -- Scenarios -- //
+
+/**
+ *
+ */
 const test_getset_handle = async (s, t) => {
     const {alex, billy} = await s.players({alex: conductorConfig, billy: conductorConfig}, true)
     //console.log(alex)
@@ -114,13 +127,3 @@ const test_set_3_handles = async (s, t) => {
     console.log('history_result: ' + JSON.stringify(history_result))
     t.deepEqual(history_result.length, 3)
 };
-
-
-// -- Export scenarios -- //
-
-module.exports = scenario => {
-    scenario("test get/set handle", test_getset_handle)
-    //scenario("test handle list", test_handle_list)
-    // FAILING
-    // scenario("test set 3 handles", test_set_3_handles)
-}

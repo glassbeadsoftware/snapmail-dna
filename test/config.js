@@ -29,6 +29,11 @@ const networkOffline = {
     sim2h_url: 'ws://bogus:4242'
 }
 
+const perfLogger = {
+    type: 'warn',
+    state_dump: false,
+}
+
 const logger = {
     type: 'debug',
     rules: {
@@ -73,6 +78,9 @@ const tracing = ({playerName}) => ({
 
 const commonConfig = { logger, network/*, tracing*/ }
 
+const perfConfig = { perfLogger, network }
+
+
 module.exports = {
     conductorConfig: Config.gen({
             app: dna
@@ -83,7 +91,12 @@ module.exports = {
             app: dna
         },
         { logger, network: networkOffline, tracing }
-    )
+    ),
+    conductorConfigPerf: Config.gen({
+            app: dna
+        },
+        perfConfig
+    ),
     // , two: Config.gen({
     //         app1: dna,
     //         app2: dna2

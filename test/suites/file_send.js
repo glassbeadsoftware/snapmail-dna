@@ -1,16 +1,24 @@
 const { conductorConfig } = require('../config')
 const { sleep, split_file } = require('../utils')
 
-/**
- *
- */
+
+// -- Export scenarios -- //
+
+module.exports = scenario => {
+    scenario("test send file dm tiny", test_send_file_dm_tiny)
+    scenario("test send too big file", test_send_file_too_big)
+
+    // LONG TESTS
+    //process.env['TRYORAMA_ZOME_CALL_TIMEOUT_MS'] = 90000
+    // scenario("test send file dm big", test_send_file_dm_big)
+}
+
+// -- Scenarios -- //
+
 const test_send_file_dm_tiny = async (s, t) => {
     await send_file_dm(s, t, 1 * 1024)
 }
 
-/**
- *
- */
 const test_send_file_dm_big = async (s, t) => {
     await send_file_dm(s, t, 0.9 * 1024 * 1024)
 }
@@ -180,15 +188,3 @@ const test_send_file_too_big = async (s, t) => {
     console.log('manifest_address: ' + JSON.stringify(manifest_address))
     t.match(JSON.stringify(manifest_address.Err), RegExp('.*ValidationFailed.*'))
 };
-
-
-// -- Export scenarios -- //
-
-module.exports = scenario => {
-    scenario("test send file dm tiny", test_send_file_dm_tiny)
-    scenario("test send too big file", test_send_file_too_big)
-
-    // LONG TESTS
-    //process.env['TRYORAMA_ZOME_CALL_TIMEOUT_MS'] = 90000
-    // scenario("test send file dm big", test_send_file_dm_big)
-}
