@@ -11,6 +11,9 @@ function sleep(milliseconds) {
     } while (currentDate - date < milliseconds);
 }
 
+/**
+ * Removed deleted mails from input mail list
+ */
 function filterMailList(mail_list) {
     let new_list = [];
     for (let mailItem of mail_list) {

@@ -11,6 +11,12 @@ use holochain_wasm_utils::{
 };
 use crate::{link_kind, entry_kind};
 
+// use hdk::{
+//     holochain_persistence_api::{
+//         hash::HashString,
+//     },
+// };
+
 /// Zome Function
 /// Return list of all InMails that this agent did not acknowledge.
 pub fn get_all_arrived_mail() -> ZomeApiResult<Vec<Address>> {
@@ -18,6 +24,13 @@ pub fn get_all_arrived_mail() -> ZomeApiResult<Vec<Address>> {
     let result = hdk::query(entry_kind::InMail.into(),
                             0, 0)?;
     hdk::debug(format!("get_all_arrived_mail: {:?}", result)).ok();
+
+    // DEBUG - Output dummy values instead
+    // let mut unreads = Vec::new();
+    // let dummy: HashString = HashString::from("QmYgC6qzGYDZyfp5xcyMH58cnBRde29Ent4JshSk629Qz6");
+    // for _ in  0..2000 {
+    //     unreads.push(dummy.clone());
+    // }
 
     // For each InMail
     let mut unreads = Vec::new();
