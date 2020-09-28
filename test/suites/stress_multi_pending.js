@@ -5,36 +5,68 @@ const { sleep, split_file } = require('../utils')
 // -- Export scenarios -- //
 
 module.exports = scenario => {
-    scenario("test stress 10 agents", test_stress_10_agents)
-    //scenario("test stress 30 agents", test_stress_30_agents)
+    scenario("test stress pending 10 agents", test_stress_pending_10_agents)
+    scenario("test stress pending 30 agents", test_stress_pending_30_agents)
 
     // CRASH TESTS
-    //scenario("test stress 100 agents", test_stress_100_agents)
+    //scenario("test stress pending 100 agents", test_stress_pending_100_agents)
 }
 
 const canBomb = true;
-const canAllSend = true;
-const canAllAttach = true;
+const allSendRounds = 1;
+const canAllAttach = false;
 
 
 // -- Scenarios -- //
 
-const test_stress_100_agents = async (s, t) => {
-    await test_stress_multi(s, t, 100)
+const test_stress_pending_100_agents = async (s, t) => {
+    await test_stress_pending_multi(s, t, 100)
 }
 
-const test_stress_30_agents = async (s, t) => {
-    await test_stress_multi(s, t, 30)
+const test_stress_pending_30_agents = async (s, t) => {
+    await test_stress_pending_multi(s, t, 30)
 }
 
-const test_stress_10_agents = async (s, t) => {
-    await test_stress_multi(s, t, 10)
+const test_stress_pending_10_agents = async (s, t) => {
+    await test_stress_pending_multi(s, t, 10)
+}
+
+
+// -- Utils -- //
+
+async function killFirstHalf(count, allPlayers) {
+    for (let i = 0; i < count / 2; i++) {
+        const playaName = 'player' + i;
+        const playa = allPlayers[playaName];
+        await playa.kill();
+    }
+}
+
+async function wakeFirstHalf(count, allPlayers, playerMap) {
+    for (let i = 0; i < count / 2; i++) {
+        const playaName = 'player' + i;
+        const playa = allPlayers[playaName];
+        await playa.spawn();
+    }
+
+    // Ping
+    const playerLast = allPlayers['player' + (count - 1)];
+    console.log('Pinging player0...')
+    const player0Address = playerMap.get('player0');
+    const params2 = { agentId: player0Address}
+    let hasResponsed = false;
+    for (let i = 0; !hasResponsed && i < 5; i++) {
+        const result4 = await playerLast.call("app", "snapmail", "ping_agent", params2)
+        hasResponsed = result4.Ok;
+        await sleep(200)
+    }
+    //assert(hasResponsed)
 }
 
 /**
  *
  */
-const test_stress_multi = async (s, t, count) => {
+const test_stress_pending_multi = async (s, t, count) => {
 
     let test_start = Date.now()
 
@@ -69,6 +101,7 @@ const test_stress_multi = async (s, t, count) => {
     const player0 = allPlayers['player0'];
     const player2 = allPlayers['player' + count / 2];
     const player3 = allPlayers['player' + count / 3];
+    const playerLast = allPlayers['player' + (count - 1)];
     const allAddresses =[ ...playerMap.values() ];
 
     // -- Set Handles -- //
@@ -107,6 +140,14 @@ const test_stress_multi = async (s, t, count) => {
     let bomb_start = Date.now();
 
     if (canBomb) {
+
+        // -- Kill first half
+        await killFirstHalf(count, allPlayers)
+        await s.consistency();
+        await sleep(1000)
+
+        // -- Send Bomb
+
         const send_bomb_params = {
             subject: "MsgBomb",
             payload: "BOOM BOOM BOOM",
@@ -117,25 +158,46 @@ const test_stress_multi = async (s, t, count) => {
         }
 
         console.log('** CALLING: send_mail() - BOMB')
-        const send_result = await player0.call("app", "snapmail", "send_mail", send_bomb_params)
+        const send_result = await playerLast.call("app", "snapmail", "send_mail", send_bomb_params)
         console.log('send_result: ' + JSON.stringify(send_result))
         // Should have no pendings
         t.deepEqual(send_result.Ok.cc_pendings, {})
 
         await s.consistency()
 
-        const arrived_result = await player2.call("app", "snapmail", "get_all_arrived_mail", {})
-        console.log('arrived_result : ' + JSON.stringify(arrived_result.Ok[0]))
-        t.deepEqual(arrived_result.Ok.length, 1)
-        const mail_adr = arrived_result.Ok[0]
-        t.match(mail_adr, RegExp('Qm*'))
+        // -- Wake first half
+        await wakeFirstHalf(count, allPlayers, playerMap)
+        await s.consistency();
+        await sleep(1000)
 
-        const mail_result = await player2.call("app", "snapmail", "get_mail", {"address": mail_adr})
-        //console.log('mail_result : ' + JSON.stringify(mail_result.Ok))
+        // -- Check reception
+
+        let mail_count = 0
+        let check_result;
+        for (let i = 0; mail_count != 1 && i < 10; i++) {
+            await s.consistency()
+            check_result = await player0.call("app", "snapmail", "check_incoming_mail", {})
+            console.log('' + i + '. check_result2: ' + JSON.stringify(check_result))
+            mail_count = check_result.Ok.length
+            await sleep(1000)
+        }
+        t.deepEqual(mail_count, 1)
+        t.match(check_result.Ok[0], RegExp('Qm*'))
+        const mail_adr = check_result.Ok[0]
+
+        // const arrived_result = await player0.call("app", "snapmail", "get_all_arrived_mail", {})
+        // console.log('arrived_result : ' + JSON.stringify(arrived_result))
+        // t.deepEqual(arrived_result.Ok.length, 1)
+        // const mail_adr = arrived_result.Ok[0]
+        // t.match(mail_adr, RegExp('Qm*'))
+
+        const mail_result = await player0.call("app", "snapmail", "get_mail", {"address": mail_adr})
+        console.log('mail_result : ' + JSON.stringify(mail_result.Ok))
         const result_obj = mail_result.Ok.mail
-        //console.log('result_obj : ' + JSON.stringify(result_obj))
+        console.log('result_obj : ' + JSON.stringify(result_obj))
         t.deepEqual(send_bomb_params.payload, result_obj.payload)
     }
+
     // Done
     let bomb_end = Date.now();
     let bomb_duration = (bomb_end - bomb_start) / 1000
@@ -145,15 +207,30 @@ const test_stress_multi = async (s, t, count) => {
 
     let all_send_start = Date.now();
 
-    if (canAllSend) {
-        let prevAgent = allAddresses[count - 1];
-        let prevName = 'player' + (count - 1)
-        for (const [playerName, agentAddress] of playerMap) {
+    for(let round = 1; round < allSendRounds + 1; round++) {
+
+        await s.consistency()
+        await sleep(1000)
+
+        console.log('\n\n *** ALL SEND ROUND: ' + round + "\n")
+
+        // -- Kill first half
+        await killFirstHalf(count, allPlayers)
+        await s.consistency();
+        await sleep(1000)
+
+        // for (const [playerName, agentAddress] of playerMap) {
+        for (let i = count / 2; i < count; i++) {
+            const recvIndex = i - count / 2;
+            const recvAgent = allAddresses[recvIndex];
+            const recvName = 'player' + recvIndex;
+            const playerName = 'player' + i;
             const playa = allPlayers[playerName];
+
             const send_params = {
-                subject: "msg from " + playerName,
-                payload: "hello to " + prevName,
-                to: [prevAgent],
+                subject: "" + round + ". msg from " + playerName,
+                payload: "hello to " + recvName + " ; round: " + round,
+                to: [recvAgent],
                 cc: [],
                 bcc: [],
                 manifest_address_list: []
@@ -164,23 +241,42 @@ const test_stress_multi = async (s, t, count) => {
             //console.log('send_result: ' + JSON.stringify(send_result2))
             // Should have no pendings
             t.deepEqual(send_result2.Ok.cc_pendings, {})
-            prevAgent = agentAddress
-            prevName = playerName
         }
 
         await s.consistency()
 
-        const arrived_result2 = await player2.call("app", "snapmail", "get_all_arrived_mail", {})
-        console.log('arrived_result2 : ' + JSON.stringify(arrived_result2.Ok[0]))
-        t.deepEqual(arrived_result2.Ok.length, 2)
-        const mail_adr2 = arrived_result2.Ok[0]
-        t.match(mail_adr2, RegExp('Qm*'))
+        // -- Wake first half
+        await wakeFirstHalf(count, allPlayers, playerMap)
+        await s.consistency();
+        await sleep(1000)
 
-        const mail_result2 = await player2.call("app", "snapmail", "get_mail", {"address": mail_adr2})
+        // -- Check reception
+        const player21 = allPlayers['player' + (count / 2 - 1)];
+
+        let mail_count = 0
+        let check_result;
+        for (let i = 0; mail_count != round && i < 5; i++) {
+            await s.consistency()
+            check_result = await player21.call("app", "snapmail", "check_incoming_mail", {})
+            console.log('' + i + '. check incoming: ' + JSON.stringify(check_result))
+            mail_count = check_result.Ok.length
+            await sleep(200)
+        }
+        t.deepEqual(mail_count, round)
+        t.match(check_result.Ok[0], RegExp('Qm*'))
+        const mail_adr2 = check_result.Ok[0]
+
+        // const arrived_result2 = await player0.call("app", "snapmail", "get_all_arrived_mail", {})
+        // console.log('arrived_result2 : ' + JSON.stringify(arrived_result2.Ok[0]))
+        // t.deepEqual(arrived_result2.Ok.length, 2)
+        // const mail_adr2 = arrived_result2.Ok[0]
+        // t.match(mail_adr2, RegExp('Qm*'))
+
+        const mail_result2 = await player21.call("app", "snapmail", "get_mail", {"address": mail_adr2})
         console.log('mail_result2 : ' + JSON.stringify(mail_result2.Ok))
         const result_obj2 = mail_result2.Ok.mail
         console.log('result_obj2 : ' + JSON.stringify(result_obj2))
-        t.deepEqual(result_obj2.payload, 'hello to player' + (count / 2))
+        t.deepEqual(result_obj2.payload, 'hello to player' + (count / 2 - 1) + ' ; round: ' + round)
     }
     // Done
     let all_send_end = Date.now();
@@ -283,15 +379,15 @@ const test_stress_multi = async (s, t, count) => {
     let test_duration = (test_end - test_start) / 1000
 
     console.log("\n\n");
-    console.log("== Stress multi ============ " + count);
-    console.log("==================================== " + count);
+    console.log("== Stress multi pending ============ " + count);
+    console.log("====================================");
     console.log("Spawn duration      : " + spawn_duration + ' sec')
     console.log("Handles duration    : " + handles_duration + ' sec')
     console.log("Bomb duration       : " + bomb_duration + ' sec')
-    console.log("All send duration   : " + all_send_duration + ' sec')
+    console.log("All send duration   : " + all_send_duration + ' sec ; rounds: ' + allSendRounds)
     console.log("All attach duration : " + all_attach_duration + ' sec')
     console.log("------------------------------------");
     console.log("Test duration       : " + test_duration + ' sec')
-    console.log("====================================" + count);
+    console.log("==================================== " + count);
     console.log("\n");
 }

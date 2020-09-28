@@ -112,6 +112,8 @@ const test_stress_send_mail = async (s, t, loop_count) => {
     let end = Date.now();
     let test_duration = (end - send_start) / 1000
 
+    console.log("\n\n");
+    console.log("== Stress single =================== " + count);
     console.log("==================================== " + loop_count);
     console.log("Send duration    : " + send_duration + ' sec')
     console.log("Get All duration : " + get_all_duration + ' sec')
@@ -120,4 +122,5 @@ const test_stress_send_mail = async (s, t, loop_count) => {
     console.log("------------------------------------");
     console.log("Test duration    : " + test_duration + ' sec')
     console.log("====================================");
+    console.log("\n");
 };

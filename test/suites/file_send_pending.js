@@ -97,6 +97,12 @@ const test_send_file_async = async (s, t, size) => {
     console.log('manifest_address: ' + JSON.stringify(manifest_address))
     t.match(manifest_address.Ok, RegExp('Qm*'))
 
+    // -- Billy goes offline
+
+    await billy.kill();
+    await s.consistency();
+    await sleep(1000)
+
     // -- Send Mail to Billy
     const send_params = {
         subject: "test-attachment",
@@ -107,9 +113,6 @@ const test_send_file_async = async (s, t, size) => {
         manifest_address_list: [manifest_address.Ok],
     }
 
-    await billy.kill();
-    await s.consistency();
-
     const send_result = await alex.call("app", "snapmail", "send_mail", send_params)
     console.log('send_result: ' + JSON.stringify(send_result.Ok))
     // Should receive via DM, so no pendings
@@ -118,8 +121,8 @@ const test_send_file_async = async (s, t, size) => {
     // Wait for all network activity to settle
     await s.consistency()
 
+    // -- Billy goes Online
     await billy.spawn();
-
     await s.consistency();
 
     // -- Ping -- //
