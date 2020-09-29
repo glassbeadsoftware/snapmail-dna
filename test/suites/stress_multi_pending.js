@@ -6,7 +6,7 @@ const { sleep, split_file } = require('../utils')
 
 module.exports = scenario => {
     scenario("test stress pending 10 agents", test_stress_pending_10_agents)
-    scenario("test stress pending 30 agents", test_stress_pending_30_agents)
+    //scenario("test stress pending 30 agents", test_stress_pending_30_agents)
 
     // CRASH TESTS
     //scenario("test stress pending 100 agents", test_stress_pending_100_agents)
@@ -219,7 +219,6 @@ const test_stress_pending_multi = async (s, t, count) => {
         await s.consistency();
         await sleep(1000)
 
-        // for (const [playerName, agentAddress] of playerMap) {
         for (let i = count / 2; i < count; i++) {
             const recvIndex = i - count / 2;
             const recvAgent = allAddresses[recvIndex];
@@ -288,9 +287,22 @@ const test_stress_pending_multi = async (s, t, count) => {
     let all_attach_start = Date.now();
 
     if (canAllAttach) {
-        prevAgent = allAddresses[count - 1];
-        prevName = 'player' + (count - 1)
-        for (const [playerName, agentAddress] of playerMap) {
+
+        // -- Kill first half
+        await killFirstHalf(count, allPlayers)
+        await s.consistency();
+        await sleep(1000)
+
+        // prevAgent = allAddresses[count - 1];
+        // prevName = 'player' + (count - 1)
+        // for (const [playerName, agentAddress] of playerMap) {
+        //     const playa = allPlayers[playerName];
+
+        for (let i = count / 2; i < count; i++) {
+            const recvIndex = i - count / 2;
+            const recvAgent = allAddresses[recvIndex];
+            const recvName = 'player' + recvIndex;
+            const playerName = 'player' + i;
             const playa = allPlayers[playerName];
 
             // Create file
@@ -327,8 +339,8 @@ const test_stress_pending_multi = async (s, t, count) => {
             // -- Send Mail
             const send_params = {
                 subject: "parcel from " + playerName,
-                payload: "payload to " + prevName,
-                to: [prevAgent],
+                payload: "payload to " + recvName,
+                to: [recvAgent],
                 cc: [],
                 bcc: [],
                 manifest_address_list: [manifest_address.Ok]
@@ -339,31 +351,52 @@ const test_stress_pending_multi = async (s, t, count) => {
             //console.log('send_result: ' + JSON.stringify(send_result2))
             // Should have no pendings
             t.deepEqual(send_result2.Ok.cc_pendings, {})
-            prevAgent = agentAddress
-            prevName = playerName
         }
 
         await s.consistency()
 
-        const arrived_result3 = await player2.call("app", "snapmail", "get_all_arrived_mail", {})
-        console.log('arrived_result3 : ' + JSON.stringify(arrived_result3.Ok[0]))
-        t.deepEqual(arrived_result3.Ok.length, 3)
-        const mail_adr3 = arrived_result3.Ok[0]
-        t.match(mail_adr3, RegExp('Qm*'))
+        // -- Wake first half
+        await wakeFirstHalf(count, allPlayers, playerMap)
+        await s.consistency();
+        await sleep(1000)
 
-        const mail_result3 = await player2.call("app", "snapmail", "get_mail", {"address": mail_adr3})
+        // // --
+        // const arrived_result3 = await player2.call("app", "snapmail", "get_all_arrived_mail", {})
+        // console.log('arrived_result3 : ' + JSON.stringify(arrived_result3.Ok[0]))
+        // t.deepEqual(arrived_result3.Ok.length, 3)
+        // const mail_adr3 = arrived_result3.Ok[0]
+        // t.match(mail_adr3, RegExp('Qm*'))
+
+        // -- Check reception
+        const player21 = allPlayers['player' + (count / 2 - 1)];
+
+        let mail_count = 0
+        let check_result;
+        for (let i = 0; mail_count != 1 && i < 5; i++) {
+            await s.consistency()
+            check_result = await player21.call("app", "snapmail", "check_incoming_mail", {})
+            console.log('' + i + '. check incoming: ' + JSON.stringify(check_result))
+            mail_count = check_result.Ok.length
+            await sleep(200)
+        }
+        t.deepEqual(mail_count, 1)
+        t.match(check_result.Ok[0], RegExp('Qm*'))
+        const mail_adr3 = check_result.Ok[0]
+
+        // --
+        const mail_result3 = await player21.call("app", "snapmail", "get_mail", {"address": mail_adr3})
         console.log('mail_result3 : ' + JSON.stringify(mail_result3.Ok))
         const mail = mail_result3.Ok.mail
         console.log('mail : ' + JSON.stringify(mail))
-        t.deepEqual(mail.payload, 'payload to player' + (count / 2))
+        t.deepEqual(mail.payload, 'payload to player' + (count / 2 - 1))
         // check for equality of the actual and expected results
-        t.true(mail.attachments[0].orig_filesize > 200 * 1024)
+        t.true(mail.attachments[0].orig_filesize > 100 * 1024)
 
         // -- Get Attachment
         manifest_address = mail.attachments[0].manifest_address
         // Get chunk list via manifest
         const get_manifest_params = {manifest_address}
-        const resultGet = await player2.call("app", "snapmail", "get_manifest", get_manifest_params)
+        const resultGet = await player21.call("app", "snapmail", "get_manifest", get_manifest_params)
         console.log('get_manifest_result: ' + JSON.stringify(resultGet))
         t.deepEqual(resultGet.Ok.orig_filesize, mail.attachments[0].orig_filesize)
     }

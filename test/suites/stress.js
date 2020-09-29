@@ -4,7 +4,7 @@ const { sleep, filterMailList } = require('../utils')
 // -- Export scenarios -- //
 
 module.exports = scenario => {
-    //scenario("test stress 10 mail", test_stress_10_mail)
+    scenario("test stress 10 mail", test_stress_10_mail)
     scenario("test stress 100 mail", test_stress_100_mail)
 
 
@@ -28,7 +28,7 @@ const test_stress_10_mail = async (s, t) => {
 }
 
 /**
- *
+ * Send many mails to one agent.
  */
 const test_stress_send_mail = async (s, t, loop_count) => {
 
