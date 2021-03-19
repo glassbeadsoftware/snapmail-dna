@@ -50,7 +50,7 @@ var beginning = Date.now();
 orchestrator.run().then(stats => {
     let end = Date.now();
     let elapsed = end - beginning;
-    console.log(`All ${num} scenarios done. Stats:`)
+    console.log(`\n\nAll ${num} scenarios finished. Stats:`)
     console.log(stats)
     console.log("Tests duration: " + elapsed / 1000 + ' sec')
 })
